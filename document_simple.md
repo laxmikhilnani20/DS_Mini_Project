@@ -22,145 +22,84 @@ Before we can tell stories with the data, we need to clean it up. Think of it li
 
 1. **Loaded the data**: We read the CSV file into a computer program that helps analyze data.
 
-2. **Checked for missing information**: Some rows were missing the "unit" (like kg or pieces). We filled those with "Unknown" so nothing was left blank. This prevents errors in analysis where missing data could skew results.
-
-3. **Looked for duplicates**: We checked if any rows were exactly the same. Luckily, there were none, so no cleaning needed there. Duplicates would make totals look bigger than they are.
-
-4. **Fixed dates**: The dates were in text format. We converted them to proper date format so the computer can understand time. This enables time-based sorting and calculations.
-
-5. **Explored distributions**: To understand the data better, we looked at box plots for the numerical values. Box plots summarize data spread, showing medians, ranges, and outliers.
+2. **Checked for missing information**: Some rows were missing the "unit" (like kg or pieces). We filled those with "Unknown" so nothing was left blank.
 
    ![fig_001](docs/images/fig_001.png)  
-   This box plot displays the distribution of import values in dollars. The box shows the interquartile range (middle 50%), the line is the median, whiskers extend to 1.5 times the IQR, and points are outliers. A data scientist uses this to check for normality, skewness, and potential data issues like extreme values that might be errors.
+   This box plot shows the distribution of import values in dollars. It helps us see if there are any weird values.
+
+3. **Looked for duplicates**: We checked if any rows were exactly the same. Luckily, there were none, so no cleaning needed there.
+
+4. **Fixed dates**: The dates were in text format. We converted them to proper date format so the computer can understand time.
+
+5. **Explored distributions**: To understand the data better, we looked at box plots for the numerical values. A data scientist uses box plots to visualize the spread of data, identify outliers (extreme values), and check for symmetry. If the plot has a long tail, the data is skewed; outliers might be errors or important anomalies that need investigation.
+
+   ![fig_001](docs/images/fig_001.png)  
+   This box plot shows the distribution of import values in dollars. It reveals the typical range of values, with any points outside the whiskers being outliers that could affect averages.
 
    ![fig_015](docs/images/fig_015.png)  
-   Box plot for import values in rupees. Helps compare value distributions across currencies, revealing if rupees-based imports have different variability.
+   This box plot for import values in rupees shows similar distribution insights, allowing comparison of value spreads in different currencies.
 
    ![fig_226](docs/images/fig_226.png)  
-   Box plot for quantity values. Illustrates the spread of import quantities, with outliers indicating exceptional shipments.
+   Box plot for quantity values, showing how import quantities are distributed and if there are unusual amounts.
 
    ![fig_227](docs/images/fig_227.png)  
-   Another quantity box plot, perhaps for a subset or different grouping.
+   Another view of quantity distributions.
 
    ![fig_228](docs/images/fig_228.png)  
-   Continued quantity distribution analysis.
+   Continued exploration of quantity data spreads.
 
    ![fig_229](docs/images/fig_229.png)  
-   More insights into quantity variability.
+   More on quantity variability.
 
    ![fig_230](docs/images/fig_230.png)  
-   Final box plot for quantities, summarizing overall spread.
+   Final box plot for quantities, ensuring we understand the full range of data.
 
-By cleaning, we ensured the data was reliable for accurate storytelling.
+By cleaning, we made sure the data was accurate and ready for analysis.
 
 ## Exploring the Data: Telling the Stories Through Pictures
 
-Now comes the fun part: Exploratory Data Analysis (EDA). EDA is like being a detective, looking for clues in the data. We create pictures to see patterns, trends, and interesting things. Data scientists use these visualizations to form hypotheses, identify correlations, and guide deeper analysis.
+Now comes the fun part: Exploratory Data Analysis (EDA). EDA is like being a detective, looking for clues in the data. We create pictures to see patterns, trends, and interesting things.
 
 ### How Imports Change Over Time
 
-First, we looked at how import values change over time. This is like watching a movie of import history. Time series plots reveal trends, seasonality, cycles, and anomalies.
+First, we looked at how import values change over time. This is like watching a movie of import history. Line charts are excellent for showing trends; data scientists analyze them for upward/downward slopes (indicating growth or decline), spikes (possible events), and repeating patterns (seasonality). As a group, these charts reveal the overall temporal behavior of imports, helping predict future patterns or identify periods of change.
 
 ![fig_231](docs/images/fig_231.png)  
-Line chart of total import value in dollars over time. The x-axis is time, y-axis is value. Data scientists interpret upward trends as growth, downward as decline, and spikes as events. This helps forecast future imports and assess economic health.
+This line chart shows the total import value in dollars over time. It helps identify if imports are generally increasing, decreasing, or fluctuating, which could reflect economic trends.
 
 ![fig_232](docs/images/fig_232.png)  
-Similar line chart for rupees. Allows comparison of trends in different currencies, useful for exchange rate analysis.
+Similar chart for rupees, providing a comparative view of value trends in another currency.
 
 ![fig_233](docs/images/fig_233.png)  
-Time series for quantity. Shows volume changes, complementing value trends.
+Line chart for quantity over time, showing volume changes that might correlate with values.
 
 ![fig_234](docs/images/fig_234.png)  
-Another time view, perhaps zoomed or filtered.
+Another time series view.
 
 ![fig_235](docs/images/fig_235.png)  
-Continued time analysis.
+More time trend analysis.
 
 ![fig_236](docs/images/fig_236.png)  
-More temporal patterns.
+Continuing the story of imports over time.
 
 ![fig_237](docs/images/fig_237.png)  
-Time-based insights.
+Time-based analysis.
 
 ![fig_238](docs/images/fig_238.png)  
-Trend identification.
+Trends.
 
 ![fig_239](docs/images/fig_239.png)  
-Further time data.
+More trends.
 
 ![fig_240](docs/images/fig_240.png)  
 Final time chart.
 
-As a group, these time series illustrate the temporal evolution of imports. Data scientists use them to model seasonality, detect structural breaks, and predict based on historical patterns.
-
 ### Which Countries Import the Most?
 
-Next, we compared imports by country. Bar charts rank countries by total value, highlighting major trade partners. The x-axis lists countries, y-axis is total value.
+Next, we compared imports by country. This helps see which African countries are big players in exports. Bar charts are ideal for comparing totals across categories; data scientists sort them to see rankings and imbalances. Collectively, this group shows the hierarchy of countries by import contribution, useful for focusing efforts on major trade partners or investigating why some countries dominate.
 
 ![fig_241](docs/images/fig_241.png)  
-Bar chart of total import value by country. Taller bars indicate higher imports. Data scientists rank countries to prioritize markets or assess dependencies.
-
-![fig_242](docs/images/fig_242.png)  
-Another country's import value bar.
-
-![fig_243](docs/images/fig_243.png)  
-Bar for a different country.
-
-![fig_244](docs/images/fig_244.png)  
-Import value comparison.
-
-![fig_245](docs/images/fig_245.png)  
-Country ranking.
-
-![fig_246](docs/images/fig_246.png)  
-Value by country.
-
-![fig_247](docs/images/fig_247.png)  
-Bar analysis.
-
-![fig_248](docs/images/fig_248.png)  
-Country data.
-
-![fig_249](docs/images/fig_249.png)  
-Import totals.
-
-![fig_250](docs/images/fig_250.png)  
-Rankings.
-
-![fig_251](docs/images/fig_251.png)  
-Comparisons.
-
-![fig_252](docs/images/fig_252.png)  
-Value bars.
-
-![fig_253](docs/images/fig_253.png)  
-Country insights.
-
-![fig_254](docs/images/fig_254.png)  
-Import data.
-
-![fig_255](docs/images/fig_255.png)  
-Bar charts.
-
-![fig_256](docs/images/fig_256.png)  
-Country rankings.
-
-![fig_257](docs/images/fig_257.png)  
-Value distribution.
-
-![fig_258](docs/images/fig_258.png)  
-Import comparisons.
-
-![fig_259](docs/images/fig_259.png)  
-Country bars.
-
-![fig_260](docs/images/fig_260.png)  
-Final country.
-
-![fig_261](docs/images/fig_261.png)  
-Last bar.
-
-This group of bar charts provides a ranking of countries by import value. Data scientists interpret them to identify top exporters, assess market concentration, and inform trade policies or business strategies.
+Bar chart showing total import value by country, highlighting major exporters.
 
 ![fig_242](docs/images/fig_242.png)  
 Another country's imports.
@@ -202,14 +141,14 @@ And so on for different countries.
 
 ![fig_260](docs/images/fig_260.png)  
 
-![fig_261](docs/images/fig_261.png)  
+![fig_261](docs/images/fig_261.png)
 
 ### What Products Are Imported?
 
-We also looked at commodities – the types of products.
+We also looked at commodities – the types of products. Bar charts here reveal which products dominate trade. Data scientists use these to identify key commodities for supply chain focus or market analysis. As a group, they show the product portfolio of imports, highlighting diversification or concentration in certain goods.
 
 ![fig_004](docs/images/fig_004.png)  
-Bar chart of import value by commodity.
+Bar chart of import value by commodity, showing top products.
 
 ![fig_005](docs/images/fig_005.png)  
 
@@ -243,18 +182,10 @@ Bar chart of import value by commodity.
 
 ### Distributions by Country
 
-To see how values vary within countries, we used box plots.
+To see how values vary within countries, we used box plots. Box plots display the distribution of values within a group, including median, quartiles, and outliers. For countries, they show how import values spread within each country. A data scientist interprets these to find variability; countries with wide boxes have diverse imports, while many outliers suggest inconsistent data or special cases. As a group, they compare variability across countries, revealing which have stable vs. erratic import patterns.
 
 ![fig_021](docs/images/fig_021.png)  
-Box plot for a country's import values.
-
-![fig_022](docs/images/fig_022.png)  
-
-And many more for each country...
-
-(Continuing with all box plots for countries)
-
-![fig_021](docs/images/fig_021.png)  
+Box plot for a country's import values, showing spread and outliers.
 
 ![fig_022](docs/images/fig_022.png)  
 
@@ -348,11 +279,11 @@ And many more for each country...
 
 ![fig_067](docs/images/fig_067.png)  
 
-![fig_068](docs/images/fig_068.png)  
+![fig_068](docs/images/fig_068.png)
 
 ### Distributions by Commodity
 
-Similar box plots for commodities.
+Similar box plots for commodities. These show how import values vary for each type of product. Data scientists look for products with high variability (wide boxes) that might be volatile in price or demand. The group helps identify commodities with stable pricing vs. those prone to fluctuations.
 
 ![fig_069](docs/images/fig_069.png)  
 
@@ -474,11 +405,11 @@ Similar box plots for commodities.
 
 ![fig_128](docs/images/fig_128.png)  
 
-![fig_129](docs/images/fig_129.png)  
+![fig_129](docs/images/fig_129.png)
 
 ### Distributions by Sub-region
 
-Box plots for sub-regions.
+Box plots for sub-regions. These compare import value distributions across geographic sub-regions in Africa. Data scientists use this to see regional patterns; sub-regions with similar box shapes might share economic traits, while differences highlight unique areas. The group provides a regional overview of import variability.
 
 ![fig_130](docs/images/fig_130.png)  
 
@@ -604,11 +535,11 @@ Box plots for sub-regions.
 
 ![fig_191](docs/images/fig_191.png)  
 
-![fig_192](docs/images/fig_192.png)  
+![fig_192](docs/images/fig_192.png)
 
 ### Other Insights
 
-More plots from the analysis.
+More plots from the analysis. These additional visualizations provide further details on the data, such as specific comparisons or deeper dives. A data scientist reviews these to confirm patterns or uncover new insights not visible in the main groups.
 
 ![fig_193](docs/images/fig_193.png)  
 
@@ -674,7 +605,7 @@ More plots from the analysis.
 
 ![fig_224](docs/images/fig_224.png)  
 
-![fig_225](docs/images/fig_225.png)  
+![fig_225](docs/images/fig_225.png)
 
 ## The End: What We Learned
 
@@ -1010,8 +941,7 @@ Box plot.
 Box plot.  
 ![fig_128](docs/images/fig_128.png)  
 Box plot.  
-![fig_129](docs/images/fig_129.png)  
-Box plot.
+![fig_129](docs/images/fig_129.png)
 
 ## Box Plots of Import Values by Sub-region
 
@@ -1141,8 +1071,7 @@ Box plot.
 Box plot.  
 ![fig_191](docs/images/fig_191.png)  
 Box plot.  
-![fig_192](docs/images/fig_192.png)  
-Box plot.
+![fig_192](docs/images/fig_192.png)
 
 ## Additional Figures
 
