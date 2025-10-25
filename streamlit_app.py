@@ -24,7 +24,7 @@ st.set_page_config(
 # ----------------------------------------------------------------------
 # File Paths
 # ----------------------------------------------------------------------
-DATA_FILE = 'cleaned_imports_from_african-countries.csv'
+DATA_FILE = 'imports-from-african-countries.csv'
 RIDGE_MODEL_FILE = 'ridge_model_pipeline.pkl'
 XGB_MODEL_FILE = 'xgboost_model_pipeline.pkl'
 
