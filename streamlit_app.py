@@ -1,13 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import pickle
 import plotly.express as px
 import plotly.graph_objects as go
 from prophet import Prophet
-from prophet.plot import plot_plotly, plot_components_plotly
 from scipy.stats import zscore
-import os
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -25,18 +22,6 @@ st.set_page_config(
 # File Paths
 # ----------------------------------------------------------------------
 DATA_FILE = 'imports-from-african-countries.csv'
-RIDGE_MODEL_FILE = 'ridge_model_pipeline.pkl'
-XGB_MODEL_FILE = 'xgboost_model_pipeline.pkl'
-
-TOP_15_COMMODITIES = [
-    'PETROLEUM OILS, ETC,(NOT CRUDE)', 'OTHER NON-MONETARY UNWROUGHT FORMS OF GOLD',
-    'STEAM COAL', 'PHOSPHORIC ACID', 'CRUDE PETROLEUM',
-    'LIQUEFIED NATURAL GAS', 'BITUMINOUS COAL', 'GOLD DOR',
-    'DI AMMONIUM PHOSPHATE', 'MANGANESE ORE(46% OR MORE BUT BLW.48%)',
-    'LUMP CHROME ORE', 'MANGANESE ORE(35% OR MORE BUT BLW.44%)',
-    'MANGANESE ORE(30% OR MORE BUT BLW.35%)', 'HARD CHROME ORE',
-    'MANGANESE ORE(44% OR MORE BUT BLW.46%)'
-]
 
 # ----------------------------------------------------------------------
 # Caching - Load Data and Models
@@ -56,57 +41,15 @@ def load_data():
         st.error(f"An error occurred while loading the data: {e}")
         st.stop()
 
-@st.cache_resource
-def load_models():
-    """Loads all pickled models from disk."""
-    prophet_models = {}
-    
-    # 1. Load all Prophet models
-    for commodity in TOP_15_COMMODITIES:
-        model_file = f'prophet_model_{commodity}.pkl'
-        try:
-            with open(model_file, 'rb') as f:
-                prophet_models[commodity] = pickle.load(f)
-        except FileNotFoundError:
-            st.warning(f"Could not find model file: {model_file}")
-        except Exception as e:
-            st.error(f"Error loading {model_file}: {e}")
-
-    # 2. Load Ridge model
-    try:
-        with open(RIDGE_MODEL_FILE, 'rb') as f:
-            ridge_pipeline = pickle.load(f)
-    except FileNotFoundError:
-        st.warning(f"Ridge model '{RIDGE_MODEL_FILE}' not found. Prediction page will be unavailable.")
-        ridge_pipeline = None
-    except Exception as e:
-        st.error(f"Error loading {RIDGE_MODEL_FILE}: {e}")
-        ridge_pipeline = None
-
-    # 3. Load XGBoost model
-    try:
-        with open(XGB_MODEL_FILE, 'rb') as f:
-            xgb_pipeline = pickle.load(f)
-    except FileNotFoundError:
-        st.info(f"Note: '{XGB_MODEL_FILE}' not found. Only Ridge predictions will be shown on prediction page.")
-        xgb_pipeline = None
-    except Exception as e:
-        st.warning(f"Error loading {XGB_MODEL_FILE}: {e}. XGBoost predictions will be unavailable.")
-        xgb_pipeline = None
-
-    return prophet_models, ridge_pipeline, xgb_pipeline
-
-# Load all data and models once
+# Load data
 cleaned_df = load_data()
-prophet_models, ridge_pipeline, xgb_pipeline = load_models()
 
 # --- Sidebar navigation ---
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", [
     "Data Dashboard",
     "EDA Dashboard",
-    "Advanced Dashboards",
-    "Import Value Prediction"  # Re-added this page
+    "Advanced Dashboards"
 ])
 
 # ======================================================================
@@ -250,27 +193,34 @@ elif page == "Advanced Dashboards":
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Commodity Forecast", "Anomaly Detection", "Supply Chain Risk", "Correlation Matrix", "Basket Forecasting"])
 
     with tab1:
-        st.subheader("Time Series Forecast (Pre-trained Models)")
-        st.write("Uses the 15 models pre-trained in the notebook for instant results.")
+        st.subheader("Time Series Forecast")
+        st.write("Forecast the next 12 months for top commodities using Prophet.")
         
-        if not prophet_models:
-            st.error("No Prophet models were loaded. Please check model files.")
-        else:
-            selected_commodity = st.selectbox("Select Commodity", list(prophet_models.keys()), key="forecast")
-            model = prophet_models[selected_commodity]
-            
-            with st.spinner("Generating forecast..."):
-                future = model.make_future_dataframe(periods=365) # 1 year forecast
-                forecast = model.predict(future)
+        top_commodities = cleaned_df.groupby('commodity')['value_dl'].sum().nlargest(15).index.tolist()
+        selected_commodity = st.selectbox("Select Commodity", top_commodities, key="forecast")
 
-                st.subheader(f"Forecast for {selected_commodity}")
-                fig1 = plot_plotly(model, forecast)
-                fig1.update_layout(title=f"Forecast for {selected_commodity}", xaxis_title="Date", yaxis_title="Import Value (USD)")
-                st.plotly_chart(fig1, use_container_width=True)
-                
-                st.subheader(f"Forecast Components for {selected_commodity}")
-                fig2 = model.plot_components(forecast)
-                st.pyplot(fig2)
+        monthly_data = cleaned_df[cleaned_df['commodity'] == selected_commodity].resample('M', on='date')['value_dl'].sum().reset_index()
+        monthly_data.columns = ['ds', 'y']
+
+        if len(monthly_data) > 1:
+            try:
+                with st.spinner("Training forecast model..."):
+                    model = Prophet()
+                    model.fit(monthly_data)
+                    future = model.make_future_dataframe(periods=12, freq='M')
+                    forecast = model.predict(future)
+
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x=monthly_data['ds'], y=monthly_data['y'], mode='lines', name='Historical'))
+                fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat'], mode='lines', name='Forecast', line=dict(color='red', dash='dash')))
+                fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat_lower'], fill=None, mode='lines', line_color='rgba(255,0,0,0.2)', name='Lower Bound'))
+                fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat_upper'], fill='tonexty', mode='lines', line_color='rgba(255,0,0,0.2)', name='Upper Bound'))
+                fig.update_layout(title=f"Forecast for {selected_commodity}")
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception as e:
+                st.error(f"Forecasting failed: {str(e)}")
+        else:
+            st.warning("Insufficient data for forecasting.")
 
     with tab2:
         st.subheader("Anomaly Detection (Unit Price)")
@@ -442,71 +392,8 @@ elif page == "Advanced Dashboards":
                 st.warning("Insufficient data for basket forecast.")
 
 # ======================================================================
-# Page 4: Import Value Prediction
+# Page 4: Advanced Dashboards (continued)
 # ======================================================================
-elif page == "Import Value Prediction":
-    st.title("💸 Predict Import Value (USD)")
-    st.write("Fill in the details of an import to get a predicted value (USD) from our models.")
-
-    if not ridge_pipeline and not xgb_pipeline:
-        st.error("Regression models not loaded. This page cannot function.")
-    else:
-        with st.form("prediction_form"):
-            col1, col2 = st.columns(2)
-            with col1:
-                country_name = st.selectbox("Country", sorted(cleaned_df['country_name'].unique()))
-                commodity = st.selectbox("Commodity", sorted(cleaned_df['commodity'].unique()))
-            with col2:
-                unit = st.selectbox("Unit", sorted(cleaned_df['unit'].unique()))
-                value_qt = st.number_input("Import Quantity (e.g., in Kgs)", min_value=0.0, value=1000.0, step=100.0)
-
-            # Date components
-            import_date = st.date_input("Import Date", pd.to_datetime("today"))
-            month = import_date.month
-            year = import_date.year
-
-            submit_button = st.form_submit_button("Predict Import Value")
-
-        if submit_button:
-            # Create the input DataFrame exactly as the model pipeline expects
-            input_data = pd.DataFrame({
-                'value_qt': [value_qt],
-                'country_name': [country_name],
-                'commodity': [commodity],
-                'unit': [unit],
-                'month': [month],
-                'year': [year]
-            })
-
-            st.subheader("Model Predictions")
-            
-            col1, col2 = st.columns(2)
-            
-            # Ridge Prediction
-            with col1:
-                if ridge_pipeline:
-                    try:
-                        ridge_pred = ridge_pipeline.predict(input_data)[0]
-                        # Ensure prediction isn't negative
-                        ridge_pred = max(0, ridge_pred) 
-                        st.metric("Ridge Model Prediction", f"${ridge_pred:,.2f}")
-                    except Exception as e:
-                        st.error(f"Error with Ridge prediction: {e}")
-                else:
-                    st.info("Ridge model not loaded.")
-
-            # XGBoost Prediction (if loaded)
-            with col2:
-                if xgb_pipeline:
-                    try:
-                        xgb_pred = xgb_pipeline.predict(input_data)[0]
-                        # Ensure prediction isn't negative
-                        xgb_pred = max(0, xgb_pred)
-                        st.metric("XGBoost Model Prediction", f"${xgb_pred:,.2f}")
-                    except Exception as e:
-                        st.error(f"Error with XGBoost prediction: {e}")
-                else:
-                    st.info("XGBoost model not loaded.")
 
 # Sidebar navigation
 st.sidebar.title("Navigation")
