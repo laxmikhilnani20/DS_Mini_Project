@@ -6,6 +6,7 @@ scikit-learn>=1.0
 xgboost>=1.6
 lightgbm>=3.3
 prophet>=1.1
+cmdstanpy>=1.0
 streamlit>=1.0
 plotly>=5.0
 jupyterlab
