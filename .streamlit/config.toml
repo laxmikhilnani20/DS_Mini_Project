@@ -1,0 +1,5 @@
+[server]
+maxMessageSize = 1024  # MB, increased from default 200 MB
+
+[browser]
+gatherUsageStats = false
