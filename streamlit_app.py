@@ -29,7 +29,16 @@ page = st.sidebar.radio("Go to", [
     "Anomaly Detection",
     "Supply Chain Dependency & Risk",
     "Commodity Basket Forecasting",
-    "Geographic Heatmap"
+    "Geographic Heatmap",
+    "Seasonal Patterns",
+    "Multi-Country Comparison",
+    "Volatility Risk",
+    "Price Sensitivity",
+    "Top-N Rankings",
+    "Forecast Uncertainty",
+    "Correlation Explorer",
+    "Custom Query",
+    "Sustainability ESG"
 ])
 
 # Home Page
@@ -226,3 +235,171 @@ elif page == "Geographic Heatmap":
     st.plotly_chart(fig)
 
     st.write("Note: For full map, integrate plotly choropleth with country codes.")
+
+# Seasonal Patterns Page
+elif page == "Seasonal Patterns":
+    st.title("Seasonal Patterns in Imports")
+
+    selected_commodity = st.selectbox("Select Commodity for Seasonal Analysis", sorted(cleaned_df['commodity'].unique()))
+
+    commodity_data = cleaned_df[cleaned_df['commodity'] == selected_commodity]
+
+    if not commodity_data.empty:
+        # Monthly aggregation
+        monthly = commodity_data.groupby(commodity_data['date'].dt.month)['value_dl'].sum().reset_index()
+        monthly.columns = ['Month', 'Total Value']
+
+        fig = px.bar(monthly, x='Month', y='Total Value', title=f"Monthly Imports for {selected_commodity}")
+        st.plotly_chart(fig)
+
+        st.write("Seasonal Insights: Higher values in certain months indicate peak seasons.")
+    else:
+        st.warning("No data for selected commodity.")
+
+# Multi-Country Comparison Page
+elif page == "Multi-Country Comparison":
+    st.title("Multi-Country Comparison")
+
+    selected_commodity = st.selectbox("Select Commodity", sorted(cleaned_df['commodity'].unique()))
+    selected_countries = st.multiselect("Select Countries", sorted(cleaned_df['country_name'].unique()), default=sorted(cleaned_df['country_name'].unique())[:3])
+
+    if selected_countries:
+        filtered = cleaned_df[(cleaned_df['commodity'] == selected_commodity) & (cleaned_df['country_name'].isin(selected_countries))]
+
+        if not filtered.empty:
+            yearly = filtered.groupby(['country_name', filtered['date'].dt.year])['value_dl'].sum().reset_index()
+            yearly.columns = ['Country', 'Year', 'Value']
+
+            fig = px.line(yearly, x='Year', y='Value', color='Country', title=f"Yearly Imports of {selected_commodity}")
+            st.plotly_chart(fig)
+        else:
+            st.warning("No data for selection.")
+    else:
+        st.warning("Select at least one country.")
+
+# Volatility Risk Page
+elif page == "Volatility Risk":
+    st.title("Volatility Risk Analysis")
+
+    selected_commodity = st.selectbox("Select Commodity for Volatility", sorted(cleaned_df['commodity'].unique()))
+
+    commodity_data = cleaned_df[cleaned_df['commodity'] == selected_commodity]
+
+    if not commodity_data.empty:
+        monthly = commodity_data.resample('M', on='date')['value_dl'].sum()
+        volatility = monthly.pct_change().std() * 100
+
+        st.write(f"Volatility (Std Dev of Monthly % Changes): {volatility:.2f}%")
+
+        fig = px.line(monthly, title=f"Monthly Imports for {selected_commodity}")
+        st.plotly_chart(fig)
+    else:
+        st.warning("No data for selected commodity.")
+
+# Price Sensitivity Page
+elif page == "Price Sensitivity":
+    st.title("Price Sensitivity Analysis")
+
+    # Simple correlation between quantity and value
+    st.write("Correlation between Quantity and Value (Price Sensitivity)")
+
+    corr = cleaned_df[['value_qt', 'value_dl']].corr().iloc[0,1]
+    st.write(f"Correlation Coefficient: {corr:.2f}")
+
+    fig = px.scatter(cleaned_df, x='value_qt', y='value_dl', title="Quantity vs Value Scatter")
+    st.plotly_chart(fig)
+
+# Top-N Rankings Page
+elif page == "Top-N Rankings":
+    st.title("Top-N Rankings")
+
+    n = st.slider("Select Top N", 5, 20, 10)
+
+    top_countries = cleaned_df.groupby('country_name')['value_dl'].sum().nlargest(n)
+    top_commodities = cleaned_df.groupby('commodity')['value_dl'].sum().nlargest(n)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Top Countries by Import Value")
+        st.bar_chart(top_countries)
+
+    with col2:
+        st.subheader("Top Commodities by Import Value")
+        st.bar_chart(top_commodities)
+
+# Forecast Uncertainty Page
+elif page == "Forecast Uncertainty":
+    st.title("Forecast Uncertainty")
+
+    selected_commodity = st.selectbox("Select Commodity for Uncertainty", sorted(cleaned_df['commodity'].unique()))
+
+    monthly_data = cleaned_df[cleaned_df['commodity'] == selected_commodity].resample('M', on='date')['value_dl'].sum().reset_index()
+    monthly_data.columns = ['ds', 'y']
+
+    if len(monthly_data) > 1:
+        try:
+            model = Prophet()
+            model.fit(monthly_data)
+            future = model.make_future_dataframe(periods=12, freq='M')
+            forecast = model.predict(future)
+
+            uncertainty = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(12)
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=uncertainty['ds'], y=uncertainty['yhat'], mode='lines', name='Forecast'))
+            fig.add_trace(go.Scatter(x=uncertainty['ds'], y=uncertainty['yhat_lower'], fill=None, mode='lines', line_color='lightblue', name='Lower'))
+            fig.add_trace(go.Scatter(x=uncertainty['ds'], y=uncertainty['yhat_upper'], fill='tonexty', mode='lines', line_color='lightblue', name='Upper'))
+            st.plotly_chart(fig)
+        except Exception as e:
+            st.error(f"Uncertainty analysis failed: {str(e)}")
+    else:
+        st.warning("Insufficient data.")
+
+# Correlation Explorer Page
+elif page == "Correlation Explorer":
+    st.title("Correlation Explorer")
+
+    # Correlation between commodities
+    pivot = cleaned_df.pivot_table(values='value_dl', index='date', columns='commodity', aggfunc='sum').fillna(0)
+    corr_matrix = pivot.corr()
+
+    fig = px.imshow(corr_matrix, title="Commodity Correlation Matrix")
+    st.plotly_chart(fig)
+
+# Custom Query Page
+elif page == "Custom Query":
+    st.title("Custom Query")
+
+    st.write("Filter data by country, commodity, and date range.")
+
+    country = st.selectbox("Country", ['All'] + sorted(cleaned_df['country_name'].unique()))
+    commodity = st.selectbox("Commodity", ['All'] + sorted(cleaned_df['commodity'].unique()))
+    start_date = st.date_input("Start Date", cleaned_df['date'].min())
+    end_date = st.date_input("End Date", cleaned_df['date'].max())
+
+    filtered = cleaned_df[
+        (cleaned_df['date'] >= pd.to_datetime(start_date)) &
+        (cleaned_df['date'] <= pd.to_datetime(end_date))
+    ]
+
+    if country != 'All':
+        filtered = filtered[filtered['country_name'] == country]
+    if commodity != 'All':
+        filtered = filtered[filtered['commodity'] == commodity]
+
+    st.dataframe(filtered.head(100))
+    st.write(f"Total Records: {len(filtered)}")
+
+# Sustainability ESG Page
+elif page == "Sustainability ESG":
+    st.title("Sustainability & ESG Insights")
+
+    st.write("Basic ESG metrics: Assuming some commodities are sustainable.")
+
+    sustainable_commodities = ['Gold', 'Diamonds', 'Coffee']  # Example
+
+    esg_data = cleaned_df[cleaned_df['commodity'].isin(sustainable_commodities)].groupby('commodity')['value_dl'].sum()
+
+    fig = px.pie(values=esg_data.values, names=esg_data.index, title="Sustainable Commodities Share")
+    st.plotly_chart(fig)
