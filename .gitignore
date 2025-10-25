@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+
+# macOS
+.DS_Store
+
+# Python virtualenv
+*.egg-info/
+
+# Distribution / packaging
+build/
+dist/
+eggs/
+.installed.cfg
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# VS Code
+.vscode/
+
+# Data
+data/
+# If you want to ignore the large CSV file in future commits, uncomment the next line
+# imports-from-african-countries.csv
