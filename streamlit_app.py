@@ -55,24 +55,27 @@ elif page == "Time Series Forecast":
     monthly_data = cleaned_df[cleaned_df['commodity'] == selected_commodity].resample('M', on='date')['value_dl'].sum().reset_index()
     monthly_data.columns = ['ds', 'y']
 
-    if not monthly_data.empty:
-        # Fit Prophet model
-        model = Prophet()
-        model.fit(monthly_data)
+    if not monthly_data.empty and len(monthly_data) > 1:
+        try:
+            # Fit Prophet model
+            model = Prophet()
+            model.fit(monthly_data)
 
-        # Forecast next 12 months
-        future = model.make_future_dataframe(periods=12, freq='M')
-        forecast = model.predict(future)
+            # Forecast next 12 months
+            future = model.make_future_dataframe(periods=12, freq='M')
+            forecast = model.predict(future)
 
-        # Plot
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=monthly_data['ds'], y=monthly_data['y'], mode='lines', name='Historical'))
-        fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat'], mode='lines', name='Forecast'))
-        fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat_lower'], fill=None, mode='lines', line_color='lightblue', name='Lower Bound'))
-        fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat_upper'], fill='tonexty', mode='lines', line_color='lightblue', name='Upper Bound'))
-        st.plotly_chart(fig)
+            # Plot
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=monthly_data['ds'], y=monthly_data['y'], mode='lines', name='Historical'))
+            fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat'], mode='lines', name='Forecast'))
+            fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat_lower'], fill=None, mode='lines', line_color='lightblue', name='Lower Bound'))
+            fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat_upper'], fill='tonexty', mode='lines', line_color='lightblue', name='Upper Bound'))
+            st.plotly_chart(fig)
+        except Exception as e:
+            st.error(f"Forecasting failed: {str(e)}")
     else:
-        st.warning("No data for selected commodity.")
+        st.warning("Insufficient data for forecasting (need at least 2 data points).")
 
 # Country & Commodity Growth Trend Page
 elif page == "Country & Commodity Growth Trend":
@@ -192,16 +195,22 @@ elif page == "Commodity Basket Forecasting":
         monthly_basket = basket_data.resample('M', on='date')['value_dl'].sum().reset_index()
         monthly_basket.columns = ['ds', 'y']
 
-        # Forecast
-        model = Prophet()
-        model.fit(monthly_basket)
-        future = model.make_future_dataframe(periods=12, freq='M')
-        forecast = model.predict(future)
+        if len(monthly_basket) > 1:
+            try:
+                # Forecast
+                model = Prophet()
+                model.fit(monthly_basket)
+                future = model.make_future_dataframe(periods=12, freq='M')
+                forecast = model.predict(future)
 
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=monthly_basket['ds'], y=monthly_basket['y'], mode='lines', name='Historical'))
-        fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat'], mode='lines', name='Forecast'))
-        st.plotly_chart(fig)
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x=monthly_basket['ds'], y=monthly_basket['y'], mode='lines', name='Historical'))
+                fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat'], mode='lines', name='Forecast'))
+                st.plotly_chart(fig)
+            except Exception as e:
+                st.error(f"Basket forecasting failed: {str(e)}")
+        else:
+            st.warning("Insufficient data for basket forecasting.")
     else:
         st.warning("No data for basket.")
 
