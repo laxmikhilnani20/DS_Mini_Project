@@ -94,7 +94,9 @@ elif page == "Country & Commodity Growth Trend":
     all_commodities = sorted(cleaned_df['commodity'].unique())
 
     selected_country = st.selectbox("Select a Country", all_countries)
-    selected_commodity = st.selectbox("Select a Commodity", all_commodities)
+    # Filter commodities available for selected country
+    available_commodities = sorted(cleaned_df[cleaned_df['country_name'] == selected_country]['commodity'].unique())
+    selected_commodity = st.selectbox("Select a Commodity", available_commodities)
 
     filtered_data = cleaned_df[
         (cleaned_df['country_name'] == selected_country) &
@@ -121,8 +123,11 @@ elif page == "Anomaly Detection":
     cleaned_df['unit_price'] = cleaned_df['value_dl'] / cleaned_df['value_qt']
     cleaned_df['unit_price'] = cleaned_df['unit_price'].replace([np.inf, -np.inf], np.nan).fillna(0)
 
-    selected_country = st.selectbox("Select Country for Anomaly Check", sorted(cleaned_df['country_name'].unique()))
-    selected_commodity = st.selectbox("Select Commodity for Anomaly Check", sorted(cleaned_df['commodity'].unique()))
+    all_countries = sorted(cleaned_df['country_name'].unique())
+    selected_country = st.selectbox("Select Country for Anomaly Check", all_countries)
+    # Filter commodities for selected country
+    available_commodities = sorted(cleaned_df[cleaned_df['country_name'] == selected_country]['commodity'].unique())
+    selected_commodity = st.selectbox("Select Commodity for Anomaly Check", available_commodities)
 
     group_data = cleaned_df[
         (cleaned_df['country_name'] == selected_country) &
