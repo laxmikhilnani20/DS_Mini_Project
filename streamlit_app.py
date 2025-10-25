@@ -365,12 +365,22 @@ elif page == "Forecast Uncertainty":
 elif page == "Correlation Explorer":
     st.title("Correlation Explorer")
 
-    # Correlation between commodities
-    pivot = cleaned_df.pivot_table(values='value_dl', index='date', columns='commodity', aggfunc='sum').fillna(0)
-    corr_matrix = pivot.corr()
+    # Limit to top 20 commodities to avoid large data
+    top_commodities = cleaned_df.groupby('commodity')['value_dl'].sum().nlargest(20).index.tolist()
 
-    fig = px.imshow(corr_matrix, title="Commodity Correlation Matrix")
-    st.plotly_chart(fig)
+    # Aggregate monthly to reduce size
+    monthly_data = cleaned_df[cleaned_df['commodity'].isin(top_commodities)].groupby(['date', 'commodity'])['value_dl'].sum().reset_index()
+    monthly_data['date'] = monthly_data['date'].dt.to_period('M').dt.to_timestamp()  # Monthly
+
+    pivot = monthly_data.pivot(index='date', columns='commodity', values='value_dl').fillna(0)
+
+    if not pivot.empty and pivot.shape[1] > 1:
+        corr_matrix = pivot.corr()
+
+        fig = px.imshow(corr_matrix, title="Top 20 Commodities Correlation Matrix (Monthly Aggregated)")
+        st.plotly_chart(fig)
+    else:
+        st.warning("Insufficient data for correlation analysis.")
 
 # Custom Query Page
 elif page == "Custom Query":
