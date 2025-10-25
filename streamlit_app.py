@@ -151,11 +151,11 @@ elif page == "Models & Novelty Dashboard":
         group_data = cleaned_df[
             (cleaned_df['country_name'] == selected_country) &
             (cleaned_df['commodity'] == selected_commodity)
-        ]
+        ].copy()  # Use copy to avoid issues
 
         if not group_data.empty:
-            cleaned_df['unit_price'] = cleaned_df['value_dl'] / cleaned_df['value_qt']
-            cleaned_df['unit_price'] = cleaned_df['unit_price'].replace([np.inf, -np.inf], np.nan).fillna(0)
+            group_data['unit_price'] = group_data['value_dl'] / group_data['value_qt']
+            group_data['unit_price'] = group_data['unit_price'].replace([np.inf, -np.inf], np.nan).fillna(0)
 
             mean_price = group_data['unit_price'].mean()
             std_price = group_data['unit_price'].std()
