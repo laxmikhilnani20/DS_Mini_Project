@@ -1237,7 +1237,7 @@ elif page == "🎯 Interactive Models":
             
             # Add vertical line separating history from forecast
             fig_forecast.add_vline(
-                x=last_date,
+                x=last_date.strftime('%Y-%m-%d'),
                 line_dash="dash",
                 line_color="gray",
                 annotation_text="Forecast Starts",
@@ -1538,8 +1538,13 @@ elif page == "🎯 Interactive Models":
         # Cluster commodities
         st.markdown("---")
         st.markdown("#### 🎨 Clustering Commodities by Import Patterns")
-        
+        # Prepare data for clustering
         X_cluster = co_occurrence_df.values
+        
+        # Replace any inf/nan values
+        X_cluster = np.nan_to_num(X_cluster, nan=0.0, posinf=1.0, neginf=0.0)
+        
+        # Standardize
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X_cluster)
         
