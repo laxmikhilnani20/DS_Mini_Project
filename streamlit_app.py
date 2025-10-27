@@ -343,8 +343,10 @@ elif page == "🔍 EDA Explorer":
             title='Total Monthly Import Value Over Time',
             labels={'Total Import Value (USD)': 'Value (USD)'}
         )
-        fig_monthly.add_vline(x=pd.Timestamp('2020-03-01'), line_dash="dash", line_color="red",
-                             annotation_text="COVID-19", annotation_position="top")
+        # Add COVID-19 marker if data spans 2020
+        if monthly_agg['Date'].min().year <= 2020 <= monthly_agg['Date'].max().year:
+            fig_monthly.add_vline(x='2020-03-01', line_dash="dash", line_color="red",
+                                 annotation_text="COVID-19", annotation_position="top")
         st.plotly_chart(fig_monthly, use_container_width=True)
         
         st.info("📊 **Insight**: Notice the sharp decline in 2020-2021 (COVID-19 impact) followed by strong recovery in 2022.")
