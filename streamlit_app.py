@@ -1133,139 +1133,296 @@ elif page == "🎯 Interactive Models":
                 Lag features (past values) typically have high importance in time series.</p>
                 </div>
                 """, unsafe_allow_html=True)
+            
+            # === NEW: TIME SERIES FORECAST ===
+            st.markdown("---")
+            st.markdown("#### 🔮 Future Import Forecast (Time Series Prediction)")
+            
+            st.info("📊 Using the trained model to predict future import values for strategic planning")
+            
+            # User control for forecast horizon
+            forecast_years = st.slider("Forecast Horizon (years)", 5, 10, 5, 1, key="forecast_years_reg")
+            forecast_months = forecast_years * 12
+            
+            # Prepare future data
+            last_date = regression_data['date'].max()
+            future_dates = pd.date_range(start=last_date + pd.DateOffset(months=1), periods=forecast_months, freq='M')
+            
+            # Create future features
+            future_df = pd.DataFrame({'date': future_dates})
+            future_df['month'] = future_df['date'].dt.month
+            future_df['year'] = future_df['date'].dt.year
+            future_df['quarter'] = future_df['date'].dt.quarter
+            future_df['days_since_start'] = (future_df['date'] - regression_data['date'].min()).dt.days
+            
+            # For lag features, use last known values and then rolling predictions
+            last_values = regression_data['value_dl'].tail(3).values
+            future_predictions = []
+            
+            for i in range(len(future_df)):
+                if i == 0:
+                    lag1 = last_values[-1]
+                    lag3 = last_values[-3] if len(last_values) >= 3 else last_values[0]
+                    rolling_mean = np.mean(last_values)
+                elif i == 1:
+                    lag1 = future_predictions[0]
+                    lag3 = last_values[-2] if len(last_values) >= 2 else last_values[0]
+                    rolling_mean = np.mean([last_values[-1], last_values[-2], future_predictions[0]])
+                elif i == 2:
+                    lag1 = future_predictions[1]
+                    lag3 = last_values[-1]
+                    rolling_mean = np.mean([last_values[-1], future_predictions[0], future_predictions[1]])
+                else:
+                    lag1 = future_predictions[i-1]
+                    lag3 = future_predictions[i-3]
+                    rolling_mean = np.mean(future_predictions[i-3:i])
+                
+                future_df.loc[i, 'value_lag1'] = lag1
+                future_df.loc[i, 'value_lag3'] = lag3
+                future_df.loc[i, 'value_rolling_mean_3'] = rolling_mean
+                
+                # Predict
+                X_future = future_df.loc[i:i, feature_cols]
+                pred = models[best_model].predict(X_future)[0]
+                future_predictions.append(pred)
+            
+            future_df['predicted_value'] = future_predictions
+            
+            # Calculate confidence intervals (simple approach using std of errors)
+            errors = y_test.values - predictions[best_model]
+            error_std = np.std(errors)
+            future_df['lower_bound'] = future_df['predicted_value'] - 1.96 * error_std
+            future_df['upper_bound'] = future_df['predicted_value'] + 1.96 * error_std
+            
+            # Create comprehensive timeline visualization
+            fig_forecast = go.Figure()
+            
+            # Historical actual data
+            fig_forecast.add_trace(go.Scatter(
+                x=regression_data['date'],
+                y=regression_data['value_dl'],
+                mode='lines',
+                name='Historical Data',
+                line=dict(color='#1E88E5', width=2)
+            ))
+            
+            # Future predictions
+            fig_forecast.add_trace(go.Scatter(
+                x=future_df['date'],
+                y=future_df['predicted_value'],
+                mode='lines',
+                name=f'Forecast ({best_model})',
+                line=dict(color='#FF6B6B', width=2, dash='dash')
+            ))
+            
+            # Confidence interval
+            fig_forecast.add_trace(go.Scatter(
+                x=future_df['date'],
+                y=future_df['upper_bound'],
+                mode='lines',
+                line=dict(width=0),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+            
+            fig_forecast.add_trace(go.Scatter(
+                x=future_df['date'],
+                y=future_df['lower_bound'],
+                fill='tonexty',
+                mode='lines',
+                line=dict(width=0),
+                name='95% Confidence Interval',
+                fillcolor='rgba(255, 107, 107, 0.2)'
+            ))
+            
+            # Add vertical line separating history from forecast
+            fig_forecast.add_vline(
+                x=last_date,
+                line_dash="dash",
+                line_color="gray",
+                annotation_text="Forecast Starts",
+                annotation_position="top"
+            )
+            
+            fig_forecast.update_layout(
+                title=f'{forecast_years}-Year Import Value Forecast',
+                xaxis_title='Date',
+                yaxis_title='Import Value (USD)',
+                hovermode='x unified',
+                height=500
+            )
+            
+            st.plotly_chart(fig_forecast, use_container_width=True)
+            
+            # Summary stats
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                avg_forecast = future_df['predicted_value'].mean()
+                st.metric("Avg Forecast Value", f"${avg_forecast:,.0f}")
+            with col2:
+                total_forecast = future_df['predicted_value'].sum()
+                st.metric("Total Forecast ({} yrs)".format(forecast_years), f"${total_forecast/1e6:.2f}M")
+            with col3:
+                forecast_trend = ((future_df['predicted_value'].iloc[-1] - future_df['predicted_value'].iloc[0]) / future_df['predicted_value'].iloc[0]) * 100
+                st.metric("Forecast Trend", f"{forecast_trend:+.1f}%")
+            
+            st.markdown("""
+            <div class="insight-box">
+            <h4>📊 How to Read This Forecast:</h4>
+            <ul>
+                <li><b>Blue Line:</b> Historical import values (actual data)</li>
+                <li><b>Red Dashed Line:</b> Predicted future values using trained ML model</li>
+                <li><b>Pink Shaded Area:</b> 95% confidence interval (uncertainty range)</li>
+                <li><b>Wider confidence band = higher uncertainty</b> as predictions go further into future</li>
+            </ul>
+            <p><b>Business Use:</b> Use this forecast for long-term procurement planning, budget allocation, and market trend analysis.</p>
+            </div>
+            """, unsafe_allow_html=True)
     
     # ========================================================================
-    # TAB 2: CLASSIFICATION MODELS
+    # ========================================================================
+    # TAB 2: CLASSIFICATION MODELS - IMPORT TREND PREDICTION
     # ========================================================================
     with ml_tabs[1]:
-        st.markdown("### 🎯 Classification: Categorize Import Patterns")
+        st.markdown("### 🎯 Classification: Predict Import Trend Direction")
         
         st.markdown("""
         <div class="insight-box">
-        <h4>🎓 What is Classification?</h4>
-        <p>Classification models predict <b>categories or classes</b>. Here, we classify transactions into value categories and detect patterns.</p>
-        <p><b>Use Cases:</b> Risk assessment, pattern recognition, anomaly detection</p>
+        <h4>🎓 What is Import Trend Classification?</h4>
+        <p>This model predicts whether a country-commodity trade relationship is <b>Growing, Stable, or Declining</b>.</p>
+        <p><b>Use Cases:</b> Identify emerging markets, detect declining trade relationships, strategic procurement planning</p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("---")
         
-        # Create classification target - categorize transaction values
-        classification_data = ml_data.copy()
+        # Prepare trend classification data
+        st.markdown("#### 📊 Building Trend Dataset")
         
-        # Define value categories based on quartiles
-        quartiles = classification_data['value_dl'].quantile([0.33, 0.67])
+        # Aggregate by country-commodity-year
+        trend_data = ml_data.groupby(['country_name', 'commodity', 'year'])['value_dl'].sum().reset_index()
         
-        def categorize_value(val):
-            if val <= quartiles[0.33]:
-                return 'Low Value'
-            elif val <= quartiles[0.67]:
-                return 'Medium Value'
+        # Calculate year-over-year growth
+        trend_data = trend_data.sort_values(['country_name', 'commodity', 'year'])
+        trend_data['yoy_growth'] = trend_data.groupby(['country_name', 'commodity'])['value_dl'].pct_change() * 100
+        
+        # Create trend category based on growth rate
+        def categorize_trend(growth):
+            if pd.isna(growth):
+                return None
+            elif growth > 10:
+                return 'Growing'
+            elif growth < -10:
+                return 'Declining'
             else:
-                return 'High Value'
+                return 'Stable'
         
-        classification_data['value_category'] = classification_data['value_dl'].apply(categorize_value)
+        trend_data['trend_category'] = trend_data['yoy_growth'].apply(categorize_trend)
+        trend_data = trend_data.dropna(subset=['trend_category'])
         
-        st.markdown("#### 📊 Classification Task: Predict Transaction Value Category")
-        st.write(f"- **Low Value:** ≤ ${quartiles[0.33]:,.2f}")
-        st.write(f"- **Medium Value:** ${quartiles[0.33]:,.2f} - ${quartiles[0.67]:,.2f}")
-        st.write(f"- **High Value:** > ${quartiles[0.67]:,.2f}")
-        
-        # Show class distribution
-        class_dist = classification_data['value_category'].value_counts()
-        fig_dist = px.pie(
-            values=class_dist.values,
-            names=class_dist.index,
-            title='Class Distribution',
-            color_discrete_sequence=['#1E88E5', '#FF6B6B', '#4CAF50']
-        )
-        st.plotly_chart(fig_dist, use_container_width=True)
-        
-        # Prepare features
-        classification_data['month'] = classification_data['date'].dt.month
-        classification_data['quarter'] = classification_data['date'].dt.quarter
-        classification_data['year'] = classification_data['date'].dt.year
-        classification_data['day_of_week'] = classification_data['date'].dt.dayofweek
-        
-        # Encode country and commodity if needed
-        if selected_country_ml == 'All Countries':
-            le_country = LabelEncoder()
-            classification_data['country_encoded'] = le_country.fit_transform(classification_data['country_name'])
+        if len(trend_data) < 50:
+            st.warning("⚠️ Insufficient data for trend classification (need at least 50 year-over-year records)")
         else:
-            classification_data['country_encoded'] = 0
-        
-        if selected_commodity_ml == 'All Commodities':
-            le_commodity = LabelEncoder()
-            classification_data['commodity_encoded'] = le_commodity.fit_transform(classification_data['commodity'])
-        else:
-            classification_data['commodity_encoded'] = 0
-        
-        feature_cols_class = ['month', 'quarter', 'year', 'day_of_week', 'country_encoded', 'commodity_encoded', 'value_qt']
-        classification_data = classification_data.dropna(subset=feature_cols_class + ['value_category'])
-        
-        if len(classification_data) < 50:
-            st.warning("⚠️ Insufficient data for classification (need at least 50 samples)")
-        else:
-            X_class = classification_data[feature_cols_class]
-            y_class = classification_data['value_category']
+            st.success(f"✅ Built trend dataset with {len(trend_data):,} year-over-year observations")
             
-            # Encode target labels for models that need numeric values
-            le_target = LabelEncoder()
-            y_class_encoded = le_target.fit_transform(y_class)
-            class_names = le_target.classes_
+            # Show trend distribution
+            st.markdown("#### 📈 Trend Distribution")
+            trend_dist = trend_data['trend_category'].value_counts()
+            
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                fig_trend_dist = px.pie(
+                    values=trend_dist.values,
+                    names=trend_dist.index,
+                    title='Import Trend Categories',
+                    color_discrete_sequence=['#4CAF50', '#FF9800', '#F44336'],
+                    color_discrete_map={'Growing': '#4CAF50', 'Stable': '#FF9800', 'Declining': '#F44336'}
+                )
+                st.plotly_chart(fig_trend_dist, use_container_width=True)
+            
+            with col2:
+                st.metric("Growing Trades", f"{trend_dist.get('Growing', 0):,}")
+                st.metric("Stable Trades", f"{trend_dist.get('Stable', 0):,}")
+                st.metric("Declining Trades", f"{trend_dist.get('Declining', 0):,}")
+            
+            # Prepare features for classification
+            # Encode country and commodity
+            le_country_trend = LabelEncoder()
+            le_commodity_trend = LabelEncoder()
+            trend_data['country_encoded'] = le_country_trend.fit_transform(trend_data['country_name'])
+            trend_data['commodity_encoded'] = le_commodity_trend.fit_transform(trend_data['commodity'])
+            
+            # Add lag features
+            trend_data = trend_data.sort_values(['country_name', 'commodity', 'year'])
+            trend_data['value_lag1'] = trend_data.groupby(['country_name', 'commodity'])['value_dl'].shift(1)
+            trend_data['growth_lag1'] = trend_data.groupby(['country_name', 'commodity'])['yoy_growth'].shift(1)
+            
+            trend_data = trend_data.dropna()
+            
+            feature_cols_trend = ['year', 'country_encoded', 'commodity_encoded', 
+                                 'value_dl', 'value_lag1', 'yoy_growth', 'growth_lag1']
+            
+            X_trend = trend_data[feature_cols_trend]
+            y_trend = trend_data['trend_category']
+            
+            # Encode target
+            le_target_trend = LabelEncoder()
+            y_trend_encoded = le_target_trend.fit_transform(y_trend)
+            trend_class_names = le_target_trend.classes_
             
             # Train-test split
-            test_size_class = st.slider("Test Set Size (%)", 10, 40, 20, 5, key="class_test_size") / 100
-            X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(
-                X_class, y_class_encoded, test_size=test_size_class, random_state=42, stratify=y_class_encoded
+            st.markdown("---")
+            test_size_trend = st.slider("Test Set Size (%)", 10, 40, 20, 5, key="trend_test_size") / 100
+            X_train_t, X_test_t, y_train_t, y_test_t = train_test_split(
+                X_trend, y_trend_encoded, test_size=test_size_trend, random_state=42, stratify=y_trend_encoded
             )
             
-            st.info(f"📊 Training on {len(X_train_c)} samples, Testing on {len(X_test_c)} samples")
+            st.info(f"📊 Training on {len(X_train_t)} samples, Testing on {len(X_test_t)} samples")
             
-            # Train classification models
+            # Train models
             st.markdown("---")
-            st.markdown("#### 🤖 Model Comparison")
+            st.markdown("#### 🤖 Model Performance Comparison")
             
-            clf_models = {
+            trend_models = {
                 'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42),
                 'Random Forest': RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42),
                 'XGBoost': xgb.XGBClassifier(n_estimators=100, max_depth=6, learning_rate=0.1, random_state=42)
             }
             
-            clf_results = {}
-            clf_predictions = {}
+            trend_results = {}
+            trend_predictions = {}
             
-            with st.spinner("Training classification models..."):
-                for name, model in clf_models.items():
-                    model.fit(X_train_c, y_train_c)
-                    y_pred_c = model.predict(X_test_c)
+            with st.spinner("Training trend prediction models..."):
+                for name, model in trend_models.items():
+                    model.fit(X_train_t, y_train_t)
+                    y_pred_t = model.predict(X_test_t)
                     
-                    clf_results[name] = {
-                        'Accuracy': accuracy_score(y_test_c, y_pred_c),
-                        'Precision': precision_score(y_test_c, y_pred_c, average='weighted'),
-                        'Recall': recall_score(y_test_c, y_pred_c, average='weighted'),
-                        'F1 Score': f1_score(y_test_c, y_pred_c, average='weighted')
+                    trend_results[name] = {
+                        'Accuracy': accuracy_score(y_test_t, y_pred_t),
+                        'Precision': precision_score(y_test_t, y_pred_t, average='weighted'),
+                        'Recall': recall_score(y_test_t, y_pred_t, average='weighted'),
+                        'F1 Score': f1_score(y_test_t, y_pred_t, average='weighted')
                     }
-                    clf_predictions[name] = y_pred_c
+                    trend_predictions[name] = y_pred_t
             
             # Display results
-            clf_results_df = pd.DataFrame(clf_results).T
-            clf_results_df = clf_results_df.round(4)
-            st.dataframe(clf_results_df, use_container_width=True)
+            trend_results_df = pd.DataFrame(trend_results).T
+            trend_results_df = trend_results_df.round(4)
+            st.dataframe(trend_results_df, use_container_width=True)
             
-            # Best classifier
-            best_clf = clf_results_df['Accuracy'].idxmax()
-            st.success(f"🏆 **Best Model:** {best_clf} (Accuracy = {clf_results_df.loc[best_clf, 'Accuracy']:.4f})")
+            best_trend_model = trend_results_df['Accuracy'].idxmax()
+            st.success(f"🏆 **Best Model:** {best_trend_model} (Accuracy = {trend_results_df.loc[best_trend_model, 'Accuracy']:.4f})")
             
             st.markdown("""
             <div class="insight-box">
-            <h4>📊 Metrics Explained:</h4>
+            <h4>💡 Business Interpretation:</h4>
             <ul>
-                <li><b>Accuracy:</b> % of correct predictions</li>
-                <li><b>Precision:</b> Of predicted positives, how many are actually positive?</li>
-                <li><b>Recall:</b> Of actual positives, how many did we find?</li>
-                <li><b>F1 Score:</b> Harmonic mean of precision and recall</li>
+                <li><b>Growing:</b> YoY growth > 10% - Emerging market opportunities</li>
+                <li><b>Stable:</b> YoY growth between -10% and +10% - Mature, predictable trade</li>
+                <li><b>Declining:</b> YoY growth < -10% - At-risk trade relationships</li>
             </ul>
+            <p><b>Use this to:</b> Prioritize growing markets, investigate declining trends, maintain stable relationships</p>
             </div>
             """, unsafe_allow_html=True)
             
@@ -1273,250 +1430,241 @@ elif page == "🎯 Interactive Models":
             st.markdown("---")
             st.markdown("#### 📊 Confusion Matrix")
             
-            cm = confusion_matrix(y_test_c, clf_predictions[best_clf])
+            cm_trend = confusion_matrix(y_test_t, trend_predictions[best_trend_model])
             
-            fig_cm = px.imshow(
-                cm,
-                labels=dict(x="Predicted", y="Actual", color="Count"),
-                x=class_names,
-                y=class_names,
+            fig_cm_trend = px.imshow(
+                cm_trend,
+                labels=dict(x="Predicted Trend", y="Actual Trend", color="Count"),
+                x=trend_class_names,
+                y=trend_class_names,
                 text_auto=True,
-                color_continuous_scale='Blues',
-                title=f'Confusion Matrix - {best_clf}'
+                color_continuous_scale='RdYlGn',
+                title=f'Trend Prediction Confusion Matrix - {best_trend_model}'
             )
-            st.plotly_chart(fig_cm, use_container_width=True)
+            st.plotly_chart(fig_cm_trend, use_container_width=True)
             
-            st.markdown("""
-            <div class="insight-box">
-            <p><b>Interpretation:</b> Diagonal cells = correct predictions. Off-diagonal = misclassifications. 
-            Perfect model would have all values on diagonal.</p>
-            </div>
-            """, unsafe_allow_html=True)
+            # Feature Importance (for tree models)
+            if best_trend_model in ['Random Forest', 'XGBoost']:
+                st.markdown("---")
+                st.markdown("#### 🎯 Feature Importance - What Drives Trend Predictions?")
+                
+                model_trend = trend_models[best_trend_model]
+                importances_trend = model_trend.feature_importances_
+                feature_importance_trend_df = pd.DataFrame({
+                    'Feature': feature_cols_trend,
+                    'Importance': importances_trend
+                }).sort_values('Importance', ascending=False)
+                
+                fig_imp_trend = px.bar(
+                    feature_importance_trend_df,
+                    x='Importance',
+                    y='Feature',
+                    orientation='h',
+                    title='Feature Importance for Trend Prediction',
+                    color='Importance',
+                    color_continuous_scale='Viridis'
+                )
+                st.plotly_chart(fig_imp_trend, use_container_width=True)
     
     # ========================================================================
-    # TAB 3: CLUSTERING MODELS
+    # TAB 3: CLUSTERING MODELS - CO-OCCURRENCE ANALYSIS
     # ========================================================================
     with ml_tabs[2]:
-        st.markdown("### 🔍 Clustering: Discover Hidden Patterns")
+        st.markdown("### 🔍 Clustering: Commodity Co-Occurrence Patterns")
         
         st.markdown("""
         <div class="insight-box">
-        <h4>🎓 What is Clustering?</h4>
-        <p>Clustering is <b>unsupervised learning</b> that groups similar data points together without predefined labels.</p>
-        <p><b>Use Cases:</b> Market segmentation, pattern discovery, anomaly detection</p>
+        <h4>🎓 What is Co-Occurrence Clustering?</h4>
+        <p>Discover which <b>commodities are imported together</b> by the same countries. This reveals trade dependencies and bundling opportunities.</p>
+        <p><b>Use Cases:</b> Bundle procurement, identify trade dependencies, market basket analysis for imports</p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("---")
         
-        # Choose clustering level
-        cluster_type = st.radio(
-            "Choose what to cluster:",
-            ["Commodities", "Countries", "Time Periods"],
-            horizontal=True
+        st.markdown("#### 📊 Building Co-Occurrence Matrix")
+        
+        # Create country-commodity matrix
+        country_commodity_matrix = ml_data.groupby(['country_name', 'commodity'])['value_dl'].sum().unstack(fill_value=0)
+        country_commodity_binary = (country_commodity_matrix > 0).astype(int)
+        
+        # Calculate co-occurrence
+        from sklearn.metrics.pairwise import cosine_similarity
+        commodity_country_matrix = country_commodity_binary.T
+        co_occurrence_matrix = cosine_similarity(commodity_country_matrix)
+        co_occurrence_df = pd.DataFrame(
+            co_occurrence_matrix,
+            index=commodity_country_matrix.index,
+            columns=commodity_country_matrix.index
         )
         
-        if cluster_type == "Commodities":
-            st.markdown("#### 📦 Commodity Clustering")
-            st.write("Group commodities with similar import patterns")
-            
-            # Aggregate by commodity
-            cluster_data = ml_data.groupby('commodity').agg({
-                'value_dl': ['sum', 'mean', 'std'],
-                'value_qt': 'sum',
-                'date': 'count'
-            }).reset_index()
-            cluster_data.columns = ['commodity', 'total_value', 'avg_value', 'std_value', 'total_qty', 'num_transactions']
-            cluster_data['std_value'] = cluster_data['std_value'].fillna(0)
-            
-            # Add time-based features
-            commodity_monthly = ml_data.groupby(['commodity', ml_data['date'].dt.to_period('M')])['value_dl'].sum().reset_index()
-            volatility = commodity_monthly.groupby('commodity')['value_dl'].std().reset_index()
-            volatility.columns = ['commodity', 'volatility']
-            cluster_data = cluster_data.merge(volatility, on='commodity', how='left')
-            cluster_data['volatility'] = cluster_data['volatility'].fillna(0)
-            
-        elif cluster_type == "Countries":
-            st.markdown("#### 🌍 Country Clustering")
-            st.write("Group countries with similar trade patterns")
-            
-            # Aggregate by country
-            cluster_data = ml_data.groupby('country_name').agg({
-                'value_dl': ['sum', 'mean', 'std'],
-                'commodity': 'nunique',
-                'date': 'count'
-            }).reset_index()
-            cluster_data.columns = ['country', 'total_value', 'avg_value', 'std_value', 'commodity_diversity', 'num_transactions']
-            cluster_data['std_value'] = cluster_data['std_value'].fillna(0)
-            
-            # Add growth rate
-            country_yearly = ml_data.groupby(['country_name', 'year'])['value_dl'].sum().reset_index()
-            growth_rates = []
-            for country in cluster_data['country'].unique():
-                country_years = country_yearly[country_yearly['country_name'] == country].sort_values('year')
-                if len(country_years) > 1:
-                    growth = (country_years['value_dl'].iloc[-1] - country_years['value_dl'].iloc[0]) / country_years['value_dl'].iloc[0]
-                else:
-                    growth = 0
-                growth_rates.append({'country': country, 'growth_rate': growth})
-            
-            growth_df = pd.DataFrame(growth_rates)
-            cluster_data = cluster_data.merge(growth_df, on='country', how='left')
-            cluster_data['growth_rate'] = cluster_data['growth_rate'].fillna(0)
-            
-        else:  # Time Periods
-            st.markdown("#### ⏰ Time Period Clustering")
-            st.write("Group similar months/quarters based on trade patterns")
-            
-            # Aggregate by month
-            cluster_data = ml_data.groupby(ml_data['date'].dt.to_period('M')).agg({
-                'value_dl': ['sum', 'mean'],
-                'commodity': 'nunique',
-                'country_name': 'nunique',
-                'date': 'count'
-            }).reset_index()
-            cluster_data.columns = ['period', 'total_value', 'avg_value', 'num_commodities', 'num_countries', 'num_transactions']
-            cluster_data['period'] = cluster_data['period'].dt.to_timestamp()
-            cluster_data['month'] = cluster_data['period'].dt.month
-            cluster_data['year'] = cluster_data['period'].dt.year
+        st.success(f"✅ Built co-occurrence matrix for {len(co_occurrence_df)} commodities")
         
-        if len(cluster_data) < 3:
-            st.warning("⚠️ Insufficient data for clustering (need at least 3 items)")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Commodities", len(co_occurrence_df))
+        with col2:
+            st.metric("Total Countries", len(country_commodity_binary))
+        with col3:
+            avg_co_occurrence = co_occurrence_df.values[np.triu_indices_from(co_occurrence_df.values, k=1)].mean()
+            st.metric("Avg Co-Occurrence", f"{avg_co_occurrence:.3f}")
+        
+        # Top co-occurring pairs
+        st.markdown("---")
+        st.markdown("#### 🔗 Top Co-Occurring Commodity Pairs")
+        
+        co_occur_pairs = []
+        for i in range(len(co_occurrence_df)):
+            for j in range(i+1, len(co_occurrence_df)):
+                if co_occurrence_df.iloc[i, j] > 0.5:
+                    co_occur_pairs.append({
+                        'Commodity 1': co_occurrence_df.index[i],
+                        'Commodity 2': co_occurrence_df.columns[j],
+                        'Co-Occurrence Score': co_occurrence_df.iloc[i, j]
+                    })
+        
+        if co_occur_pairs:
+            co_occur_df = pd.DataFrame(co_occur_pairs).sort_values('Co-Occurrence Score', ascending=False).head(20)
+            st.dataframe(co_occur_df, use_container_width=True)
+            
+            st.markdown("""
+            <div class="insight-box">
+            <p><b>Interpretation:</b> Score of 1.0 = always imported together. Score of 0.5+ = frequently imported together.</p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            # Select features for clustering
-            if cluster_type == "Commodities":
-                feature_cols_cluster = ['total_value', 'avg_value', 'std_value', 'total_qty', 'num_transactions', 'volatility']
-                id_col = 'commodity'
-            elif cluster_type == "Countries":
-                feature_cols_cluster = ['total_value', 'avg_value', 'std_value', 'commodity_diversity', 'num_transactions', 'growth_rate']
-                id_col = 'country'
-            else:
-                feature_cols_cluster = ['total_value', 'avg_value', 'num_commodities', 'num_countries', 'num_transactions']
-                id_col = 'period'
-            
-            X_cluster = cluster_data[feature_cols_cluster].fillna(0)
-            
-            # Standardize features
-            scaler = StandardScaler()
-            X_scaled = scaler.fit_transform(X_cluster)
-            
-            # Determine optimal number of clusters with elbow method
-            st.markdown("---")
-            st.markdown("#### 📊 Elbow Method - Finding Optimal Clusters")
-            
-            max_clusters = min(10, len(cluster_data) - 1)
+            st.info("No strong co-occurrence patterns found (score > 0.5)")
+        
+        # Cluster commodities
+        st.markdown("---")
+        st.markdown("#### 🎨 Clustering Commodities by Import Patterns")
+        
+        X_cluster = co_occurrence_df.values
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X_cluster)
+        
+        max_clusters = min(10, len(co_occurrence_df) // 5)
+        
+        if max_clusters >= 2:
             inertias = []
             silhouette_scores = []
             K_range = range(2, max_clusters + 1)
             
-            with st.spinner("Computing optimal clusters..."):
+            with st.spinner("Finding optimal commodity clusters..."):
                 for k in K_range:
                     kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
                     kmeans.fit(X_scaled)
                     inertias.append(kmeans.inertia_)
-                    silhouette_scores.append(silhouette_score(X_scaled, kmeans.labels_))
+                    if k > 1:
+                        silhouette_scores.append(silhouette_score(X_scaled, kmeans.labels_))
             
-            # Plot elbow curve
             fig_elbow = go.Figure()
             fig_elbow.add_trace(go.Scatter(
                 x=list(K_range),
                 y=inertias,
                 mode='lines+markers',
-                name='Inertia',
                 line=dict(color='#1E88E5', width=2)
             ))
             fig_elbow.update_layout(
-                title='Elbow Method for Optimal K',
+                title='Elbow Method for Commodity Clusters',
                 xaxis_title='Number of Clusters (K)',
-                yaxis_title='Inertia (Within-cluster sum of squares)',
-                hovermode='x unified'
+                yaxis_title='Inertia',
+                height=400
             )
             st.plotly_chart(fig_elbow, use_container_width=True)
             
-            # Plot silhouette scores
-            fig_silhouette = go.Figure()
-            fig_silhouette.add_trace(go.Scatter(
-                x=list(K_range),
-                y=silhouette_scores,
-                mode='lines+markers',
-                name='Silhouette Score',
-                line=dict(color='#4CAF50', width=2),
-                fill='tozeroy'
-            ))
-            fig_silhouette.update_layout(
-                title='Silhouette Score by Number of Clusters',
-                xaxis_title='Number of Clusters (K)',
-                yaxis_title='Silhouette Score (higher is better)',
-                hovermode='x unified'
-            )
-            st.plotly_chart(fig_silhouette, use_container_width=True)
+            if silhouette_scores:
+                optimal_k = silhouette_scores.index(max(silhouette_scores)) + 2
+                st.success(f"💡 Recommended: **{optimal_k} clusters** (best silhouette score)")
+            else:
+                optimal_k = 3
             
-            # User selects number of clusters
-            optimal_k = silhouette_scores.index(max(silhouette_scores)) + 2
-            st.success(f"💡 Recommended: **{optimal_k} clusters** (highest silhouette score: {max(silhouette_scores):.3f})")
+            n_clusters = st.slider("Select Number of Commodity Clusters:", 2, max_clusters, optimal_k, 1, key="n_commodity_clusters")
             
-            n_clusters = st.slider("Select Number of Clusters:", 2, max_clusters, optimal_k, 1, key="n_clusters")
-            
-            # Perform K-Means clustering
             kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
             cluster_labels = kmeans.fit_predict(X_scaled)
             
-            cluster_data['Cluster'] = cluster_labels
-            cluster_data['Cluster'] = cluster_data['Cluster'].apply(lambda x: f'Cluster {x+1}')
+            cluster_assignments = pd.DataFrame({
+                'Commodity': co_occurrence_df.index,
+                'Cluster': cluster_labels
+            })
+            cluster_assignments['Cluster'] = cluster_assignments['Cluster'].apply(lambda x: f'Group {x+1}')
             
-            # PCA for visualization
+            # PCA visualization
             st.markdown("---")
-            st.markdown("#### 🎨 Cluster Visualization (PCA 2D Projection)")
+            st.markdown("#### 🗺️ Commodity Cluster Map (PCA 2D)")
             
             pca = PCA(n_components=2)
             X_pca = pca.fit_transform(X_scaled)
             
-            cluster_data['PCA1'] = X_pca[:, 0]
-            cluster_data['PCA2'] = X_pca[:, 1]
+            cluster_assignments['PCA1'] = X_pca[:, 0]
+            cluster_assignments['PCA2'] = X_pca[:, 1]
             
             fig_clusters = px.scatter(
-                cluster_data,
+                cluster_assignments,
                 x='PCA1',
                 y='PCA2',
                 color='Cluster',
-                hover_data=[id_col],
-                title=f'{cluster_type} Clustering Visualization',
-                color_discrete_sequence=px.colors.qualitative.Set2
+                hover_data=['Commodity'],
+                title='Commodity Clusters Based on Co-Import Patterns',
+                color_discrete_sequence=px.colors.qualitative.Set3,
+                height=600
             )
             st.plotly_chart(fig_clusters, use_container_width=True)
             
             st.markdown(f"""
             <div class="insight-box">
-            <p><b>PCA Explained:</b> Principal Component Analysis reduces multi-dimensional data to 2D for visualization. 
-            Variance explained: PC1={pca.explained_variance_ratio_[0]*100:.1f}%, PC2={pca.explained_variance_ratio_[1]*100:.1f}%</p>
+            <p><b>PCA Explained Variance:</b> PC1={pca.explained_variance_ratio_[0]*100:.1f}%, PC2={pca.explained_variance_ratio_[1]*100:.1f}%</p>
             </div>
             """, unsafe_allow_html=True)
             
-            # Cluster Summary
+            # Show cluster members
             st.markdown("---")
-            st.markdown("#### 📋 Cluster Summary Statistics")
+            st.markdown("#### 📋 Commodity Groups (Clusters)")
             
-            cluster_summary = cluster_data.groupby('Cluster')[feature_cols_cluster].mean().round(2)
-            cluster_summary['Count'] = cluster_data.groupby('Cluster').size()
-            st.dataframe(cluster_summary, use_container_width=True)
+            selected_cluster_view = st.selectbox(
+                "Select cluster to view members:",
+                cluster_assignments['Cluster'].unique()
+            )
             
-            # Show items in each cluster
-            st.markdown("#### 🔍 Cluster Members")
-            selected_cluster = st.selectbox("Select cluster to view members:", cluster_data['Cluster'].unique())
+            cluster_members = cluster_assignments[cluster_assignments['Cluster'] == selected_cluster_view]['Commodity'].tolist()
+            st.write(f"**{selected_cluster_view}** contains {len(cluster_members)} commodities:")
+            st.write(", ".join(cluster_members))
             
-            cluster_members = cluster_data[cluster_data['Cluster'] == selected_cluster][
-                [id_col] + feature_cols_cluster
-            ].sort_values('total_value', ascending=False)
+            # Cluster characteristics
+            st.markdown("---")
+            st.markdown("#### 📊 Cluster Characteristics")
             
-            st.dataframe(cluster_members, use_container_width=True)
+            cluster_chars = []
+            for cluster in cluster_assignments['Cluster'].unique():
+                cluster_commodities = cluster_assignments[cluster_assignments['Cluster'] == cluster]['Commodity'].tolist()
+                cluster_imports = ml_data[ml_data['commodity'].isin(cluster_commodities)]
+                
+                cluster_chars.append({
+                    'Cluster': cluster,
+                    'Num Commodities': len(cluster_commodities),
+                    'Num Countries': cluster_imports['country_name'].nunique(),
+                    'Total Value': cluster_imports['value_dl'].sum(),
+                    'Avg Import Value': cluster_imports['value_dl'].mean()
+                })
+            
+            cluster_chars_df = pd.DataFrame(cluster_chars).sort_values('Total Value', ascending=False)
+            st.dataframe(cluster_chars_df, use_container_width=True)
             
             st.markdown("""
             <div class="insight-box">
-            <h4>💡 Clustering Insights:</h4>
-            <p><b>Silhouette Score:</b> Measures how well-defined clusters are (-1 to 1, higher is better)</p>
-            <p><b>Business Value:</b> Use clusters to identify similar trading partners, optimize strategies per segment, and detect outliers</p>
+            <h4>💡 Business Value of Co-Occurrence Clustering:</h4>
+            <ul>
+                <li><b>Bundle Procurement:</b> Commodities in the same cluster are often imported together - negotiate bundle deals</li>
+                <li><b>Trade Dependencies:</b> Understand which products have correlated demand across countries</li>
+                <li><b>Market Diversification:</b> Identify commodity groups with different import patterns for risk management</li>
+                <li><b>Strategic Planning:</b> Countries importing one commodity in a cluster likely need others from same cluster</li>
+            </ul>
             </div>
             """, unsafe_allow_html=True)
+        else:
+            st.warning("⚠️ Insufficient commodities for meaningful clustering")
+
 
 # ======================================================================
 # FOOTER
