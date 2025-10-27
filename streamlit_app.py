@@ -314,8 +314,69 @@ if page == "📊 Data Overview":
 # DASHBOARD 2: EDA EXPLORER
 # ======================================================================
 elif page == "🔍 EDA Explorer":
-    st.markdown('<p class="main-header">🔍 Exploratory Data Analysis</p>', unsafe_allow_html=True)
-    st.markdown("### Comprehensive Visual Analysis of Import Patterns")
+    st.markdown('<p class="main-header">🔍 Interactive EDA Explorer</p>', unsafe_allow_html=True)
+    st.markdown("### Deep-Dive Analysis: Select Country + Commodity for 8 Comprehensive Visualizations")
+    
+    # === INTERACTIVE SELECTORS ===
+    st.markdown("## 🎛️ Select Your Analysis Parameters")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### 🌍 Select Country")
+        all_countries_eda = sorted(df['country_name'].unique())
+        selected_country_eda = st.selectbox(
+            "Choose a country to analyze:",
+            options=all_countries_eda,
+            index=0,
+            key="eda_country_select"
+        )
+    
+    with col2:
+        st.markdown("#### 📦 Select Commodity")
+        available_commodities_eda = sorted(
+            df[df['country_name'] == selected_country_eda]['commodity'].unique()
+        )
+        
+        if available_commodities_eda:
+            selected_commodity_eda = st.selectbox(
+                "Choose a commodity to analyze:",
+                options=available_commodities_eda,
+                index=0,
+                key="eda_commodity_select"
+            )
+        else:
+            st.error("No commodities available for selected country")
+            st.stop()
+    
+    # Filter data for selected combination
+    eda_filtered = df[
+        (df['country_name'] == selected_country_eda) &
+        (df['commodity'] == selected_commodity_eda)
+    ].copy()
+    
+    if eda_filtered.empty:
+        st.warning("⚠️ No data available for this country-commodity combination.")
+        st.stop()
+    
+    # === SUMMARY METRICS ===
+    st.markdown("---")
+    st.markdown(f"## 📊 Analyzing: **{selected_commodity_eda}** from **{selected_country_eda}**")
+    
+    metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+    
+    with metric_col1:
+        st.metric("Total Transactions", f"{len(eda_filtered):,}")
+    with metric_col2:
+        st.metric("Total Value (USD)", f"${eda_filtered['value_dl'].sum()/1e6:.2f}M")
+    with metric_col3:
+        st.metric("Avg Transaction", f"${eda_filtered['value_dl'].mean():,.0f}")
+    with metric_col4:
+        date_span = (eda_filtered['date'].max() - eda_filtered['date'].min()).days
+        st.metric("Time Span (Days)", f"{date_span}")
+    
+    st.markdown("---")
+    st.markdown("## 📈 8 Comprehensive Visual Analyses with Data Scientist Insights")
     
     # Create tabs for different EDA aspects
     eda_tabs = st.tabs([
@@ -329,68 +390,131 @@ elif page == "🔍 EDA Explorer":
     
     # ===== TAB 1: TIME SERIES =====
     with eda_tabs[0]:
-        st.markdown("### 📈 Temporal Analysis")
+        st.markdown("### 1️⃣ Monthly Import Trend Over Time")
         
-        # Monthly trends
-        st.markdown("#### Overall Monthly Import Trends")
-        monthly_agg = df.resample('M', on='date')['value_dl'].sum().reset_index()
-        monthly_agg.columns = ['Date', 'Total Import Value (USD)']
+        monthly_eda = eda_filtered.resample('M', on='date')['value_dl'].sum().reset_index()
+        monthly_eda.columns = ['Date', 'Value']
         
-        fig_monthly = px.line(
-            monthly_agg,
+        fig_monthly_eda = px.line(
+            monthly_eda,
             x='Date',
-            y='Total Import Value (USD)',
-            title='Total Monthly Import Value Over Time (2020 COVID-19 impact visible)',
-            labels={'Total Import Value (USD)': 'Value (USD)'}
+            y='Value',
+            title=f'Monthly Trend: {selected_commodity_eda} from {selected_country_eda}',
+            labels={'Value': 'Import Value (USD)'},
+            markers=True
         )
-        st.plotly_chart(fig_monthly, use_container_width=True)
+        fig_monthly_eda.update_traces(line_color='#1E88E5', line_width=2.5)
+        st.plotly_chart(fig_monthly_eda, use_container_width=True)
         
-        st.info("📊 **Insight**: Notice the sharp decline in 2020-2021 (COVID-19 impact) followed by strong recovery in 2022.")
+        st.markdown("""
+        <div class="insight-box">
+        <h4>📊 Data Scientist Perspective:</h4>
+        <p><b>What this shows:</b> Monthly time series of import values revealing temporal patterns and trends.</p>
+        <p><b>Key insights to look for:</b> Trend direction (growing/declining), volatility (supply/demand stability), 
+        cyclical patterns (seasonal business cycles), and anomalies (policy changes, market shocks).</p>
+        <p><b>Why it matters:</b> Time series analysis is fundamental for forecasting, inventory planning, and detecting market disruptions early.</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Year-over-Year comparison
-        st.markdown("#### Year-over-Year Comparison")
-        yearly_agg = df.groupby('year')['value_dl'].sum().reset_index()
-        yearly_agg.columns = ['Year', 'Total Value']
-        yearly_agg['YoY %'] = yearly_agg['Total Value'].pct_change() * 100
+        st.markdown("---")
+        st.markdown("### 2️⃣ Year-over-Year Growth Analysis")
+        yearly_eda = eda_filtered.groupby('year')['value_dl'].sum().reset_index()
+        yearly_eda.columns = ['Year', 'Total Value']
+        yearly_eda['YoY %'] = yearly_eda['Total Value'].pct_change() * 100
         
         col1, col2 = st.columns(2)
         with col1:
-            fig_yearly = px.bar(
-                yearly_agg,
+            fig_yearly_eda = px.bar(
+                yearly_eda,
                 x='Year',
                 y='Total Value',
-                title='Yearly Total Import Value',
-                text_auto='.2s'
+                title='Yearly Import Value',
+                text_auto='.2s',
+                color='Total Value',
+                color_continuous_scale='Blues'
             )
-            st.plotly_chart(fig_yearly, use_container_width=True)
+            st.plotly_chart(fig_yearly_eda, use_container_width=True)
         
         with col2:
-            fig_yoy = px.line(
-                yearly_agg.dropna(),
-                x='Year',
-                y='YoY %',
-                title='Year-over-Year Growth Rate (%)',
-                markers=True
-            )
-            fig_yoy.add_hline(y=0, line_dash="dash", line_color="gray")
-            st.plotly_chart(fig_yoy, use_container_width=True)
+            if len(yearly_eda.dropna()) > 0:
+                fig_yoy_eda = px.line(
+                    yearly_eda.dropna(),
+                    x='Year',
+                    y='YoY %',
+                    title='Year-over-Year Growth Rate (%)',
+                    markers=True
+                )
+                fig_yoy_eda.add_hline(y=0, line_dash="dash", line_color="gray")
+                fig_yoy_eda.update_traces(line_color='#FF6B6B', line_width=3)
+                st.plotly_chart(fig_yoy_eda, use_container_width=True)
+            else:
+                st.info("Insufficient years for YoY analysis")
+        
+        st.markdown("""
+        <div class="insight-box">
+        <h4>📊 Data Scientist Perspective:</h4>
+        <p><b>What this shows:</b> Annual aggregation and growth rates showing long-term trends.</p>
+        <p><b>Key insights:</b> Consistent positive YoY% indicates sustained market expansion. Large swings signal instability or external shocks.</p>
+        <p><b>Why it matters:</b> YoY analysis removes seasonal noise and helps identify long-term strategic trends for policy/investment decisions.</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Seasonal patterns
-        st.markdown("#### Seasonal Patterns")
-        df_season = df.copy()
-        df_season['Month'] = df_season['date'].dt.month_name()
+        st.markdown("---")
+        st.markdown("### 3️⃣ Seasonal Patterns & Monthly Breakdown")
+        eda_filtered_season = eda_filtered.copy()
+        eda_filtered_season['Month'] = eda_filtered_season['date'].dt.month_name()
         month_order = ['January', 'February', 'March', 'April', 'May', 'June', 
                       'July', 'August', 'September', 'October', 'November', 'December']
-        seasonal = df_season.groupby('Month')['value_dl'].sum().reindex(month_order).reset_index()
+        seasonal_eda = eda_filtered_season.groupby('Month')['value_dl'].agg(['sum', 'mean']).reindex(month_order).reset_index()
+        seasonal_eda.columns = ['Month', 'Total', 'Average']
         
-        fig_seasonal = px.bar(
-            seasonal,
+        fig_seasonal_eda = px.bar(
+            seasonal_eda,
             x='Month',
-            y='value_dl',
-            title='Average Import Value by Month',
-            labels={'value_dl': 'Total Value (USD)'}
+            y='Total',
+            title='Seasonal Import Patterns by Month',
+            labels={'Total': 'Total Import Value (USD)'},
+            color='Total',
+            color_continuous_scale='Viridis'
         )
-        st.plotly_chart(fig_seasonal, use_container_width=True)
+        st.plotly_chart(fig_seasonal_eda, use_container_width=True)
+        
+        st.markdown("""
+        <div class="insight-box">
+        <h4>📊 Data Scientist Perspective:</h4>
+        <p><b>What this shows:</b> Aggregated import values across calendar months revealing seasonal business cycles.</p>
+        <p><b>Key insights:</b> Peak months indicate high-demand periods (harvest seasons, holidays). Large variations = strong seasonal effects requiring inventory planning.</p>
+        <p><b>Why it matters:</b> Understanding seasonality enables better logistics planning, working capital management, and demand forecasting.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Quarterly Analysis
+        st.markdown("---")
+        st.markdown("### 4️⃣ Quarterly Performance Analysis")
+        quarterly_eda = eda_filtered.groupby(['year', 'quarter'])['value_dl'].sum().reset_index()
+        quarterly_eda['Year-Quarter'] = quarterly_eda['year'].astype(str) + '-Q' + quarterly_eda['quarter'].astype(str)
+        
+        fig_quarterly_eda = px.bar(
+            quarterly_eda,
+            x='Year-Quarter',
+            y='value_dl',
+            title='Quarterly Import Trends',
+            labels={'value_dl': 'Import Value (USD)'},
+            color='quarter',
+            color_continuous_scale='Teal'
+        )
+        st.plotly_chart(fig_quarterly_eda, use_container_width=True)
+        
+        st.markdown("""
+        <div class="insight-box">
+        <h4>📊 Data Scientist Perspective:</h4>
+        <p><b>What this shows:</b> Quarterly aggregation smooths monthly noise while preserving seasonal patterns.</p>
+        <p><b>Key insights:</b> Quarter-on-Quarter trends are more stable than monthly. Same quarters across years show consistency or structural changes.</p>
+        <p><b>Why it matters:</b> Quarterly analysis aligns with business reporting cycles and balances short-term volatility with long-term trends.</p>
+        </div>
+        """, unsafe_allow_html=True)
     
     # ===== TAB 2: GEOGRAPHIC ANALYSIS =====
     with eda_tabs[1]:
@@ -485,33 +609,139 @@ elif page == "🔍 EDA Explorer":
     
     # ===== TAB 4: DISTRIBUTIONS =====
     with eda_tabs[3]:
-        st.markdown("### 📊 Statistical Distributions")
+        st.markdown("### 5️⃣ Transaction Value Distribution")
         
-        # Value distributions
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("#### Import Value Distribution")
-            fig_hist = px.histogram(
-                df[df['value_dl'] < df['value_dl'].quantile(0.95)],  # Remove extreme outliers for better viz
+            fig_hist_eda = px.histogram(
+                eda_filtered,
                 x='value_dl',
-                nbins=50,
-                title='Distribution of Import Values (95th percentile)',
-                labels={'value_dl': 'Value (USD)'}
+                nbins=30,
+                title='Distribution of Transaction Values',
+                labels={'value_dl': 'Transaction Value (USD)'},
+                marginal='box'
             )
-            st.plotly_chart(fig_hist, use_container_width=True)
+            st.plotly_chart(fig_hist_eda, use_container_width=True)
         
         with col2:
-            st.markdown("#### Log-Scale Distribution")
-            fig_log = px.histogram(
-                df[df['value_dl'] > 0],
-                x='value_dl',
-                nbins=50,
-                title='Log-Scale Import Value Distribution',
-                labels={'value_dl': 'Value (USD)'},
-                log_y=True
+            fig_box_eda = px.box(
+                eda_filtered,
+                y='value_dl',
+                title='Statistical Summary (Box Plot)',
+                labels={'value_dl': 'Transaction Value (USD)'}
             )
-            st.plotly_chart(fig_log, use_container_width=True)
+            st.plotly_chart(fig_box_eda, use_container_width=True)
+        
+        st.markdown("""
+        <div class="insight-box">
+        <h4>📊 Data Scientist Perspective:</h4>
+        <p><b>What this shows:</b> Statistical distribution of individual transaction values revealing data characteristics.</p>
+        <p><b>Key insights:</b> Right-skewed = few large transactions dominate. Box plot whiskers show outliers requiring investigation.</p>
+        <p><b>Why it matters:</b> Distribution shape informs pricing strategies, risk assessment, and whether to use median or mean for KPIs.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Moving Averages
+        st.markdown("---")
+        st.markdown("### 6️⃣ Trend Smoothing with Moving Averages")
+        
+        if len(monthly_eda) >= 3:
+            monthly_eda['MA_3'] = monthly_eda['Value'].rolling(window=3, min_periods=1).mean()
+            if len(monthly_eda) >= 6:
+                monthly_eda['MA_6'] = monthly_eda['Value'].rolling(window=6, min_periods=1).mean()
+            
+            fig_ma_eda = go.Figure()
+            fig_ma_eda.add_trace(go.Scatter(x=monthly_eda['Date'], y=monthly_eda['Value'], 
+                                           name='Actual', line=dict(color='lightgray', width=1)))
+            fig_ma_eda.add_trace(go.Scatter(x=monthly_eda['Date'], y=monthly_eda['MA_3'], 
+                                           name='3-Month MA', line=dict(color='#1E88E5', width=2)))
+            if len(monthly_eda) >= 6:
+                fig_ma_eda.add_trace(go.Scatter(x=monthly_eda['Date'], y=monthly_eda['MA_6'], 
+                                               name='6-Month MA', line=dict(color='#FF6B6B', width=2.5)))
+            fig_ma_eda.update_layout(title='Trend Analysis with Moving Averages', 
+                                     xaxis_title='Date', yaxis_title='Import Value (USD)')
+            st.plotly_chart(fig_ma_eda, use_container_width=True)
+        else:
+            st.info("Insufficient data points for moving average calculation")
+        
+        st.markdown("""
+        <div class="insight-box">
+        <h4>📊 Data Scientist Perspective:</h4>
+        <p><b>What this shows:</b> Smoothed trends removing short-term noise to reveal underlying direction.</p>
+        <p><b>Key insights:</b> Moving averages filter random fluctuations. Crossovers signal trend reversals.</p>
+        <p><b>Why it matters:</b> Essential for distinguishing real market shifts from random variation in strategic planning.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Quantity vs Value
+        st.markdown("---")
+        st.markdown("### 7️⃣ Quantity vs Value Relationship")
+        
+        if (eda_filtered['value_qt'] > 0).any():
+            valid_qty_data = eda_filtered[eda_filtered['value_qt'] > 0].copy()
+            valid_qty_data['unit_price'] = valid_qty_data['value_dl'] / valid_qty_data['value_qt']
+            
+            fig_scatter_eda = px.scatter(
+                valid_qty_data.sample(min(500, len(valid_qty_data))),
+                x='value_qt',
+                y='value_dl',
+                title='Quantity vs Value Scatter (Price Analysis)',
+                labels={'value_qt': 'Quantity', 'value_dl': 'Value (USD)'},
+                color='unit_price',
+                color_continuous_scale='Plasma',
+                hover_data=['date', 'unit_price']
+            )
+            st.plotly_chart(fig_scatter_eda, use_container_width=True)
+            
+            if len(valid_qty_data) > 0:
+                price_trend = valid_qty_data.resample('M', on='date')['unit_price'].mean().reset_index()
+                fig_price_eda = px.line(
+                    price_trend,
+                    x='date',
+                    y='unit_price',
+                    title='Average Unit Price Trend Over Time',
+                    labels={'unit_price': 'Unit Price (USD)', 'date': 'Date'},
+                    markers=True
+                )
+                st.plotly_chart(fig_price_eda, use_container_width=True)
+        else:
+            st.info("No quantity data available for this selection")
+        
+        st.markdown("""
+        <div class="insight-box">
+        <h4>📊 Data Scientist Perspective:</h4>
+        <p><b>What this shows:</b> Relationship between quantities and values, revealing pricing dynamics.</p>
+        <p><b>Key insights:</b> Linear relationship = stable pricing. Decreasing unit price with quantity = bulk discounts.</p>
+        <p><b>Why it matters:</b> Critical for procurement negotiations, inflation adjustment, and quality-price optimization.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Cumulative Growth
+        st.markdown("---")
+        st.markdown("### 8️⃣ Cumulative Import Value Growth")
+        
+        cumulative_eda = monthly_eda.copy()
+        cumulative_eda['Cumulative Value'] = cumulative_eda['Value'].cumsum()
+        
+        fig_cumulative_eda = px.area(
+            cumulative_eda,
+            x='Date',
+            y='Cumulative Value',
+            title='Cumulative Import Value Over Time',
+            labels={'Cumulative Value': 'Total Cumulative Value (USD)'}
+        )
+        fig_cumulative_eda.update_traces(fillcolor='rgba(30,136,229,0.3)', line_color='#1E88E5')
+        st.plotly_chart(fig_cumulative_eda, use_container_width=True)
+        
+        st.markdown("""
+        <div class="insight-box">
+        <h4>📊 Data Scientist Perspective:</h4>
+        <p><b>What this shows:</b> Running total of import values showing cumulative business impact over time.</p>
+        <p><b>Key insights:</b> Steepening curve = accelerating imports. Total value exchanged over entire period.</p>
+        <p><b>Why it matters:</b> Shows total economic impact and helps identify inflection points in trade relationships.</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Box plots by region
         if 'sub_region' in df.columns:
