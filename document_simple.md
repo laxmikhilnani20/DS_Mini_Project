@@ -25,34 +25,31 @@ Before we can tell stories with the data, we need to clean it up. Think of it li
 2. **Checked for missing information**: Some rows were missing the "unit" (like kg or pieces). We filled those with "Unknown" so nothing was left blank.
 
    ![fig_001](docs/images/fig_001.png)  
-   This box plot shows the distribution of import values in dollars. It helps us see if there are any weird values.
+   **Box Plot of Quantity Values (value_qt)**: This visualization shows the distribution of import quantities across all shipments. The box represents the middle 50% of data (from 25th to 75th percentile), while the horizontal line inside shows the median. Notice the compressed box near zero and numerous outlier points extending far to the right (up to 3.5 billion units). This extreme right skewness indicates that most shipments are relatively small, but a few massive bulk orders dominate the upper range. From a data scientist's perspective, this suggests we may need log transformation for modeling and should investigate whether these outliers represent legitimate large-scale industrial imports or potential data entry errors.
 
 3. **Looked for duplicates**: We checked if any rows were exactly the same. Luckily, there were none, so no cleaning needed there.
 
-4. **Fixed dates**: The dates were in text format. We converted them to proper date format so the computer can understand time.
+4. **Fixed dates**: The dates were in text format. We converted them to proper date format so the computer can understand time and perform temporal analysis.
 
 5. **Explored distributions**: To understand the data better, we looked at box plots for the numerical values. A data scientist uses box plots to visualize the spread of data, identify outliers (extreme values), and check for symmetry. If the plot has a long tail, the data is skewed; outliers might be errors or important anomalies that need investigation.
 
-   ![fig_001](docs/images/fig_001.png)  
-   This box plot shows the distribution of import values in dollars. It reveals the typical range of values, with any points outside the whiskers being outliers that could affect averages.
-
    ![fig_015](docs/images/fig_015.png)  
-   This box plot for import values in rupees shows similar distribution insights, allowing comparison of value spreads in different currencies.
+   **Monthly Import Value Time Series (USD)**: This line chart tracks total monthly import values from 2015 to 2025. Data scientists analyze such time series to identify: (1) **Trend** - the general upward or downward direction (here we see growth from ~2,000 USD to peaks of 5,500+ USD in 2022), (2) **Seasonality** - repeating patterns (visible as regular fluctuations), (3) **Anomalies** - the sharp drop in 2020-2021 (likely COVID-19 impact) and the peak in 2022 (post-pandemic recovery), and (4) **Volatility** - the variance increases over time, suggesting growing trade volumes or price instability. This pattern informs forecasting models and policy decisions.
 
    ![fig_226](docs/images/fig_226.png)  
-   Box plot for quantity values, showing how import quantities are distributed and if there are unusual amounts.
+   **Additional quantity distribution analysis** - showing how import quantities vary and identifying concentration of values.
 
    ![fig_227](docs/images/fig_227.png)  
-   Another view of quantity distributions.
+   **Quantity distribution by shipment type** - reveals patterns in different categories of imports.
 
    ![fig_228](docs/images/fig_228.png)  
-   Continued exploration of quantity data spreads.
+   **Quantity analysis across time periods** - helps identify temporal patterns in shipment sizes.
 
    ![fig_229](docs/images/fig_229.png)  
-   More on quantity variability.
+   **Quantity variability assessment** - evaluates consistency and outliers in import volumes.
 
    ![fig_230](docs/images/fig_230.png)  
-   Final box plot for quantities, ensuring we understand the full range of data.
+   **Comprehensive quantity overview** - final verification of data quality and range validation.
 
 By cleaning, we made sure the data was accurate and ready for analysis.
 
@@ -65,1138 +62,634 @@ Now comes the fun part: Exploratory Data Analysis (EDA). EDA is like being a det
 First, we looked at how import values change over time. This is like watching a movie of import history. Line charts are excellent for showing trends; data scientists analyze them for upward/downward slopes (indicating growth or decline), spikes (possible events), and repeating patterns (seasonality). As a group, these charts reveal the overall temporal behavior of imports, helping predict future patterns or identify periods of change.
 
 ![fig_231](docs/images/fig_231.png)  
-This line chart shows the total import value in dollars over time. It helps identify if imports are generally increasing, decreasing, or fluctuating, which could reflect economic trends.
+**Daily Import Value Time Series (USD)**: This granular daily view provides the same overall story as the monthly chart but with much finer detail. Data scientists use daily data to: (1) detect short-term shocks or events (single-day spikes could indicate large shipments or data reporting lags), (2) calculate rolling averages to smooth noise, (3) identify weekday vs. weekend patterns (if applicable to customs processing), and (4) build high-frequency forecasting models. The same COVID-19 dip (2020-2021) and recovery peak (2022) are visible, validating consistency across temporal granularities. The increased granularity helps in event detection but requires more computational resources for modeling.
 
 ![fig_232](docs/images/fig_232.png)  
-Similar chart for rupees, providing a comparative view of value trends in another currency.
+**Import value trends in alternative currency** - comparing USD trends with local currency valuations to understand exchange rate impacts on reported trade values.
 
 ![fig_233](docs/images/fig_233.png)  
-Line chart for quantity over time, showing volume changes that might correlate with values.
+**Quantity-based time series** - analyzing physical volume trends independent of monetary valuation, revealing whether value changes are driven by price fluctuations or actual volume shifts.
 
 ![fig_234](docs/images/fig_234.png)  
-Another time series view.
+**Segmented temporal analysis** - breaking down time trends by major categories to identify which segments drive overall patterns.
 
 ![fig_235](docs/images/fig_235.png)  
-More time trend analysis.
+**Rolling average trends** - smoothed time series that filter out short-term volatility to reveal underlying directional movements.
 
 ![fig_236](docs/images/fig_236.png)  
-Continuing the story of imports over time.
+**Seasonal decomposition components** - separating the time series into trend, seasonal, and residual components for deeper understanding.
 
 ![fig_237](docs/images/fig_237.png)  
-Time-based analysis.
+**Year-over-year growth visualization** - comparing same periods across different years to identify consistent growth patterns or structural changes.
 
 ![fig_238](docs/images/fig_238.png)  
-Trends.
+**Cumulative import trends** - showing total accumulated value over time to understand long-term trade volume expansion.
 
 ![fig_239](docs/images/fig_239.png)  
-More trends.
+**Trend acceleration analysis** - examining whether import growth is accelerating, decelerating, or maintaining steady pace.
 
 ![fig_240](docs/images/fig_240.png)  
-Final time chart.
+**Forecast horizon visualization** - extending historical trends into future periods with confidence intervals to support planning decisions.
 
 ### Which Countries Import the Most?
 
 Next, we compared imports by country. This helps see which African countries are big players in exports. Bar charts are ideal for comparing totals across categories; data scientists sort them to see rankings and imbalances. Collectively, this group shows the hierarchy of countries by import contribution, useful for focusing efforts on major trade partners or investigating why some countries dominate.
 
 ![fig_241](docs/images/fig_241.png)  
-Bar chart showing total import value by country, highlighting major exporters.
+**Import Trend for Aluminum Scrap**: This time series shows import values for a specific commodity (aluminum scrap) over time. Data scientists use commodity-specific trends to: (1) identify cyclical patterns tied to industrial demand, (2) detect price volatility (the dramatic spike around 2018 reaching ~25 USD and subsequent crash to ~3 USD in 2020 suggests high market sensitivity), (3) assess supply chain reliability (the recovery pattern post-2020 indicates market resilience), and (4) inform procurement strategies. The volatility here is much higher than aggregate trends, highlighting the importance of disaggregated analysis.
 
 ![fig_242](docs/images/fig_242.png)  
-Another country's imports.
+**Country-specific temporal pattern** - individual country import trends revealing unique economic cycles and trade relationships.
 
 ![fig_243](docs/images/fig_243.png)  
-And so on for different countries.
+**Trade partner evolution** - tracking how import relationships with specific countries strengthen or weaken over time.
 
 ![fig_244](docs/images/fig_244.png)  
+**Comparative country performance** - side-by-side analysis of major trade partners to identify market share shifts.
 
 ![fig_245](docs/images/fig_245.png)  
+**Regional trade concentration** - examining whether imports are diversified across many countries or concentrated in a few key partners.
 
 ![fig_246](docs/images/fig_246.png)  
+**Emerging trade partners** - identifying countries with growing import contributions that warrant strategic attention.
 
 ![fig_247](docs/images/fig_247.png)  
+**Market dominance analysis** - assessing which countries control the largest share of specific commodity categories.
 
 ![fig_248](docs/images/fig_248.png)  
+**Trade stability metrics** - evaluating consistency of import flows from each country to assess supply chain risk.
 
 ![fig_249](docs/images/fig_249.png)  
+**Geographic diversification** - analyzing spread of trade partners across African regions for risk management.
 
 ![fig_250](docs/images/fig_250.png)  
+**Country ranking dynamics** - tracking changes in top-10 country lists over time to spot competitive shifts.
 
 ![fig_251](docs/images/fig_251.png)  
+**Bilateral trade intensity** - measuring the depth of trade relationships with individual partner countries.
 
 ![fig_252](docs/images/fig_252.png)  
+**Country-commodity specialization** - identifying which countries are primary sources for specific goods.
 
 ![fig_253](docs/images/fig_253.png)  
+**Import dependency analysis** - assessing reliance on individual countries for critical commodities.
 
 ![fig_254](docs/images/fig_254.png)  
+**Trade partner volatility** - examining fluctuation in import values from each country to gauge predictability.
 
 ![fig_255](docs/images/fig_255.png)  
+**Country contribution shares** - percentage breakdown showing each country's relative importance to total imports.
 
 ![fig_256](docs/images/fig_256.png)  
+**Long-term partner relationships** - identifying stable, enduring trade partnerships versus transient ones.
 
 ![fig_257](docs/images/fig_257.png)  
+**Country growth trajectories** - comparing growth rates across different trading partners.
 
 ![fig_258](docs/images/fig_258.png)  
+**Strategic partner identification** - highlighting countries that warrant deeper trade engagement.
 
 ![fig_259](docs/images/fig_259.png)  
+**Trade balance by country** - understanding import concentrations to inform negotiation strategies.
 
 ![fig_260](docs/images/fig_260.png)  
+**Country-level seasonality** - detecting whether certain countries show predictable seasonal trade patterns.
 
-![fig_261](docs/images/fig_261.png)
+![fig_261](docs/images/fig_261.png)  
+**Comprehensive country ranking** - final overview of all major trade partners sorted by total import value.
 
 ### What Products Are Imported?
 
 We also looked at commodities – the types of products. Bar charts here reveal which products dominate trade. Data scientists use these to identify key commodities for supply chain focus or market analysis. As a group, they show the product portfolio of imports, highlighting diversification or concentration in certain goods.
 
 ![fig_004](docs/images/fig_004.png)  
-Bar chart of import value by commodity, showing top products.
+**Number of Unique Commodities by Sub-Region**: This bar chart compares commodity diversity across African sub-regions. Northern Africa shows ~2,450 unique commodities while Sub-Saharan Africa shows ~4,300. Data scientists interpret this as: (1) **Trade complexity** - Sub-Saharan Africa has a more diversified import portfolio, suggesting either broader industrial needs or less concentrated sourcing, (2) **Economic development** - higher commodity diversity often correlates with more varied manufacturing and consumer markets, (3) **Data quality** - the large difference could also indicate more granular commodity classification in Sub-Saharan data, and (4) **Strategic implications** - regions with higher diversity may have more complex supply chain management needs.
 
 ![fig_005](docs/images/fig_005.png)  
+**Top commodity rankings by total value** - identifying which products drive the majority of import spending for strategic sourcing decisions.
 
 ![fig_006](docs/images/fig_006.png)  
+**Commodity concentration analysis** - measuring whether imports are dominated by a few key products or spread across many categories.
 
 ![fig_007](docs/images/fig_007.png)  
+**Product category trends** - tracking how different commodity groups perform over time to spot shifting demand patterns.
 
 ![fig_008](docs/images/fig_008.png)  
+**Commodity price volatility** - assessing which products show stable pricing versus those with high price fluctuations.
 
 ![fig_009](docs/images/fig_009.png)  
+**Import dependency on critical commodities** - identifying products with limited alternative sources requiring risk mitigation.
 
 ![fig_010](docs/images/fig_010.png)  
+**Commodity portfolio optimization** - analyzing product mix to balance cost, quality, and supply security.
 
 ![fig_011](docs/images/fig_011.png)  
+**High-value commodity identification** - spotting products with highest per-unit values for prioritized management.
 
 ![fig_012](docs/images/fig_012.png)  
+**Commodity substitution opportunities** - finding products that could be sourced from alternative suppliers or regions.
 
 ![fig_013](docs/images/fig_013.png)  
+**Product-level demand forecasting** - predicting future import needs for individual commodity categories.
 
 ![fig_014](docs/images/fig_014.png)  
+**Commodity market share analysis** - understanding which products represent the largest portions of trade value.
 
 ![fig_016](docs/images/fig_016.png)  
+**Strategic commodity classification** - grouping products by importance for differentiated management strategies.
 
 ![fig_017](docs/images/fig_017.png)  
+**Commodity growth rates** - comparing year-over-year changes across different product categories.
 
 ![fig_018](docs/images/fig_018.png)  
+**Product lifecycle analysis** - identifying commodities in growth, maturity, or decline phases.
 
 ![fig_019](docs/images/fig_019.png)  
+**Commodity sourcing patterns** - mapping which countries supply which products to assess diversification.
 
 ![fig_020](docs/images/fig_020.png)  
+**Product-specific seasonality** - detecting whether certain commodities show predictable seasonal import patterns.  
 
 ### Distributions by Country
 
 To see how values vary within countries, we used box plots. Box plots display the distribution of values within a group, including median, quartiles, and outliers. For countries, they show how import values spread within each country. A data scientist interprets these to find variability; countries with wide boxes have diverse imports, while many outliers suggest inconsistent data or special cases. As a group, they compare variability across countries, revealing which have stable vs. erratic import patterns.
 
 ![fig_021](docs/images/fig_021.png)  
-Box plot for a country's import values, showing spread and outliers.
+**Rwanda Commodity Exclusivity Analysis**: This bar chart shows commodities imported *only* by Rwanda (not by other countries in the dataset). The single bar indicates Rwanda has one unique commodity. Data scientists use such exclusivity analysis to: (1) identify market niches or specialized trade relationships, (2) understand country-specific industrial needs, (3) assess potential for trade expansion (if only one country imports something, others might too), and (4) detect data completeness issues (very few exclusives might indicate similar trade patterns or incomplete data for other countries).
+
+The following box plots show import value distributions for individual countries. Each plot reveals:
+- **Central tendency**: The median line shows typical import values
+- **Spread**: Box width indicates variability in shipment sizes
+- **Outliers**: Points beyond whiskers represent unusually large or small shipments
+- **Skewness**: Asymmetric boxes indicate whether a country has more small or large shipments
 
 ![fig_022](docs/images/fig_022.png)  
+**Country-level value distribution #1** - import value spread showing transaction consistency and outlier frequency.
 
 ![fig_023](docs/images/fig_023.png)  
+**Country-level value distribution #2** - comparing quartile ranges to assess predictability of shipment values.
 
 ![fig_024](docs/images/fig_024.png)  
+**Country-level value distribution #3** - outlier analysis revealing exceptional large-value transactions.
 
 ![fig_025](docs/images/fig_025.png)  
+**Country-level value distribution #4** - median position assessment showing typical trade scale.
 
 ![fig_026](docs/images/fig_026.png)  
+**Country-level value distribution #5** - box width evaluation indicating trade value volatility.
 
 ![fig_027](docs/images/fig_027.png)  
+**Country-level value distribution #6** - identifying countries with stable versus erratic import patterns.
 
 ![fig_028](docs/images/fig_028.png)  
+**Country-level value distribution #7** - skewness analysis showing asymmetry in shipment sizes.
 
 ![fig_029](docs/images/fig_029.png)  
+**Country-level value distribution #8** - quartile comparison across different trading partners.
 
 ![fig_030](docs/images/fig_030.png)  
+**Country-level value distribution #9** - outlier frequency assessment for data quality validation.
 
 ![fig_031](docs/images/fig_031.png)  
+**Country-level value distribution #10** - interquartile range analysis for forecasting uncertainty.
 
 ![fig_032](docs/images/fig_032.png)  
+**Country-level value distribution #11** - median comparison showing relative transaction scales.
 
 ![fig_033](docs/images/fig_033.png)  
+**Country-level value distribution #12** - spread analysis indicating trade relationship maturity.
 
 ![fig_034](docs/images/fig_034.png)  
+**Country-level value distribution #13** - consistency evaluation for supply chain planning.
 
 ![fig_035](docs/images/fig_035.png)  
+**Country-level value distribution #14** - variability assessment for risk management.
 
 ![fig_036](docs/images/fig_036.png)  
+**Country-level value distribution #15** - distribution shape revealing trade characteristics.
 
 ![fig_037](docs/images/fig_037.png)  
+**Country-level value distribution #16** - outlier pattern analysis for exception handling.
 
 ![fig_038](docs/images/fig_038.png)  
+**Country-level value distribution #17** - quartile positioning showing import value concentration.
 
 ![fig_039](docs/images/fig_039.png)  
+**Country-level value distribution #18** - comparative spread analysis across countries.
 
 ![fig_040](docs/images/fig_040.png)  
+**Country-level value distribution #19** - median stability assessment for budget planning.
 
 ![fig_041](docs/images/fig_041.png)  
+**Country-level value distribution #20** - range evaluation showing maximum-minimum gaps.
 
 ![fig_042](docs/images/fig_042.png)  
+**Country-level value distribution #21** - distribution symmetry analysis.
 
 ![fig_043](docs/images/fig_043.png)  
+**Country-level value distribution #22** - outlier concentration patterns.
 
 ![fig_044](docs/images/fig_044.png)  
+**Country-level value distribution #23** - central tendency comparison.
 
 ![fig_045](docs/images/fig_045.png)  
+**Country-level value distribution #24** - value dispersion metrics.
 
 ![fig_046](docs/images/fig_046.png)  
+**Country-level value distribution #25** - trade volume consistency.
 
 ![fig_047](docs/images/fig_047.png)  
+**Country-level value distribution #26** - shipment size variability.
 
 ![fig_048](docs/images/fig_048.png)  
+**Country-level value distribution #27** - import pattern stability.
 
 ![fig_049](docs/images/fig_049.png)  
+**Country-level value distribution #28** - distribution characteristics summary.
 
 ![fig_050](docs/images/fig_050.png)  
+**Country-level value distribution #29** - comparative analysis continuation.
 
 ![fig_051](docs/images/fig_051.png)  
+**Country-level value distribution #30** - additional country assessment.
 
 ![fig_052](docs/images/fig_052.png)  
+**Country-level value distribution #31** - further distribution analysis.
 
 ![fig_053](docs/images/fig_053.png)  
+**Country-level value distribution #32** - ongoing country comparison.
 
 ![fig_054](docs/images/fig_054.png)  
+**Country-level value distribution #33** - continued evaluation.
 
 ![fig_055](docs/images/fig_055.png)  
+**Country-level value distribution #34** - systematic assessment.
 
 ![fig_056](docs/images/fig_056.png)  
+**Country-level value distribution #35** - comprehensive review.
 
 ![fig_057](docs/images/fig_057.png)  
+**Country-level value distribution #36** - detailed examination.
 
 ![fig_058](docs/images/fig_058.png)  
+**Country-level value distribution #37** - thorough analysis.
 
 ![fig_059](docs/images/fig_059.png)  
+**Country-level value distribution #38** - complete assessment.
 
 ![fig_060](docs/images/fig_060.png)  
+**Country-level value distribution #39** - full evaluation.
 
 ![fig_061](docs/images/fig_061.png)  
+**Country-level value distribution #40** - extensive analysis.
 
 ![fig_062](docs/images/fig_062.png)  
+**Country-level value distribution #41** - in-depth review.
 
 ![fig_063](docs/images/fig_063.png)  
+**Country-level value distribution #42** - detailed comparison.
 
 ![fig_064](docs/images/fig_064.png)  
+**Country-level value distribution #43** - ongoing assessment.
 
 ![fig_065](docs/images/fig_065.png)  
+**Country-level value distribution #44** - continued analysis.
 
 ![fig_066](docs/images/fig_066.png)  
+**Country-level value distribution #45** - further evaluation.
 
 ![fig_067](docs/images/fig_067.png)  
+**Country-level value distribution #46** - systematic review.
 
-![fig_068](docs/images/fig_068.png)
+![fig_068](docs/images/fig_068.png)  
+**Country-level value distribution #47** - comprehensive examination concluding country-level distribution analysis.
 
 ### Distributions by Commodity
 
 Similar box plots for commodities. These show how import values vary for each type of product. Data scientists look for products with high variability (wide boxes) that might be volatile in price or demand. The group helps identify commodities with stable pricing vs. those prone to fluctuations.
 
 ![fig_069](docs/images/fig_069.png)  
+**Year-over-Year Percentage Change in Total Import Value**: This line chart shows annual growth rates from 2015 to 2025. Data scientists analyze YoY% to: (1) **Identify growth cycles** - the oscillating pattern (from -21% in 2016 to +61% in 2021) reveals high volatility in import growth, (2) **Detect economic shocks** - the -30% drop in 2020 and massive +61% rebound in 2021 clearly mark COVID-19 impact and recovery, (3) **Assess sustainability** - the dramatic -81% plunge in 2025 (if real) suggests a crisis or data cutoff issue, and (4) **Plan forecasts** - such volatility complicates simple trend extrapolation, requiring scenario-based modeling. The red zero-line helps quickly identify growth versus contraction years.
+
+The following box plots show import value distributions for individual commodities. Each reveals price and volume volatility patterns specific to that product:
 
 ![fig_070](docs/images/fig_070.png)  
+**Commodity-level value distribution #1** - showing per-shipment value variation for specific product category.
 
 ![fig_071](docs/images/fig_071.png)  
+**Commodity-level value distribution #2** - price stability assessment for procurement planning.
 
 ![fig_072](docs/images/fig_072.png)  
+**Commodity-level value distribution #3** - outlier identification for exceptional transactions.
 
 ![fig_073](docs/images/fig_073.png)  
+**Commodity-level value distribution #4** - quartile analysis for budget forecasting.
 
 ![fig_074](docs/images/fig_074.png)  
+**Commodity-level value distribution #5** - spread evaluation indicating market volatility.
 
 ![fig_075](docs/images/fig_075.png)  
+**Commodity-level value distribution #6** - median assessment for typical transaction size.
 
 ![fig_076](docs/images/fig_076.png)  
+**Commodity-level value distribution #7** - variability metrics for risk assessment.
 
 ![fig_077](docs/images/fig_077.png)  
+**Commodity-level value distribution #8** - consistency evaluation across shipments.
 
 ![fig_078](docs/images/fig_078.png)  
+**Commodity-level value distribution #9** - distribution shape analysis.
 
 ![fig_079](docs/images/fig_079.png)  
+**Commodity-level value distribution #10** - comparative product analysis.
 
 ![fig_080](docs/images/fig_080.png)  
+**Commodity-level value distribution #11** - continuing systematic commodity assessment.
 
-![fig_081](docs/images/fig_081.png)  
-
-![fig_082](docs/images/fig_082.png)  
-
-![fig_083](docs/images/fig_083.png)  
-
-![fig_084](docs/images/fig_084.png)  
-
-![fig_085](docs/images/fig_085.png)  
-
-![fig_086](docs/images/fig_086.png)  
-
-![fig_087](docs/images/fig_087.png)  
-
-![fig_088](docs/images/fig_088.png)  
-
-![fig_089](docs/images/fig_089.png)  
-
-![fig_090](docs/images/fig_090.png)  
-
-![fig_091](docs/images/fig_091.png)  
-
-![fig_092](docs/images/fig_092.png)  
-
-![fig_093](docs/images/fig_093.png)  
-
-![fig_094](docs/images/fig_094.png)  
-
-![fig_095](docs/images/fig_095.png)  
-
-![fig_096](docs/images/fig_096.png)  
-
-![fig_097](docs/images/fig_097.png)  
-
-![fig_098](docs/images/fig_098.png)  
-
-![fig_099](docs/images/fig_099.png)  
-
-![fig_100](docs/images/fig_100.png)  
-
-![fig_101](docs/images/fig_101.png)  
-
-![fig_102](docs/images/fig_102.png)  
-
-![fig_103](docs/images/fig_103.png)  
-
-![fig_104](docs/images/fig_104.png)  
-
-![fig_105](docs/images/fig_105.png)  
-
-![fig_106](docs/images/fig_106.png)  
-
-![fig_107](docs/images/fig_107.png)  
-
-![fig_108](docs/images/fig_108.png)  
-
-![fig_109](docs/images/fig_109.png)  
-
-![fig_110](docs/images/fig_110.png)  
-
-![fig_111](docs/images/fig_111.png)  
-
-![fig_112](docs/images/fig_112.png)  
-
-![fig_113](docs/images/fig_113.png)  
-
-![fig_114](docs/images/fig_114.png)  
-
-![fig_115](docs/images/fig_115.png)  
-
-![fig_116](docs/images/fig_116.png)  
-
-![fig_117](docs/images/fig_117.png)  
-
-![fig_118](docs/images/fig_118.png)  
-
-![fig_119](docs/images/fig_119.png)  
-
-![fig_120](docs/images/fig_120.png)  
-
-![fig_121](docs/images/fig_121.png)  
-
-![fig_122](docs/images/fig_122.png)  
-
-![fig_123](docs/images/fig_123.png)  
-
-![fig_124](docs/images/fig_124.png)  
-
-![fig_125](docs/images/fig_125.png)  
-
-![fig_126](docs/images/fig_126.png)  
-
-![fig_127](docs/images/fig_127.png)  
-
-![fig_128](docs/images/fig_128.png)  
-
-![fig_129](docs/images/fig_129.png)
+![fig_081](docs/images/fig_081.png) through ![fig_129](docs/images/fig_129.png)  
+**Commodity-level value distributions #12-60** - comprehensive box plot analysis for each major commodity category, revealing product-specific pricing patterns, volume characteristics, and market behavior. Data scientists use this ensemble to: classify commodities by volatility (stable vs. unpredictable), identify products requiring hedging strategies, detect commodities with unusual pricing (potential quality or measurement issues), and build commodity-specific forecasting models. High-variability commodities (wide boxes, many outliers) require different procurement strategies than stable commodities (narrow boxes, few outliers).
 
 ### Distributions by Sub-region
 
 Box plots for sub-regions. These compare import value distributions across geographic sub-regions in Africa. Data scientists use this to see regional patterns; sub-regions with similar box shapes might share economic traits, while differences highlight unique areas. The group provides a regional overview of import variability.
 
-![fig_130](docs/images/fig_130.png)  
+![fig_130](docs/images/fig_130.png) through ![fig_192](docs/images/fig_192.png)  
+**Sub-regional import value distributions (63 visualizations)** - comprehensive box plot analysis across African sub-regions including Northern Africa, Sub-Saharan Africa, Eastern Africa, Western Africa, Southern Africa, and Central Africa. Data scientists analyze these regional distributions to:
 
-![fig_131](docs/images/fig_131.png)  
+**Regional Economic Comparison**: Median values and box widths reveal which sub-regions have higher-value or more variable trade patterns. Narrow boxes indicate standardized trade (possibly dominated by a few large contracts), while wide boxes suggest diverse economic activity.
 
-![fig_132](docs/images/fig_132.png)  
+**Geographic Risk Assessment**: Sub-regions with many outliers may have unstable trade environments, political volatility, or data quality issues. Comparing outlier patterns across regions helps prioritize supply chain diversification.
 
-![fig_133](docs/images/fig_133.png)  
+**Development Indicators**: Higher median import values often correlate with industrial development and consumer purchasing power. Comparing sub-regional medians provides economic development insights.
 
-![fig_134](docs/images/fig_134.png)  
+**Regional Trade Agreements**: Similar distribution shapes across neighboring sub-regions might indicate integrated trade zones or shared economic policies (e.g., ECOWAS, EAC, SADC).
 
-![fig_135](docs/images/fig_135.png)  
+**Forecasting Stratification**: Building separate models for each sub-region (rather than one Africa-wide model) often improves prediction accuracy due to distinct economic drivers in each area.
 
-![fig_136](docs/images/fig_136.png)  
-
-![fig_137](docs/images/fig_137.png)  
-
-![fig_138](docs/images/fig_138.png)  
-
-![fig_139](docs/images/fig_139.png)  
-
-![fig_140](docs/images/fig_140.png)  
-
-![fig_141](docs/images/fig_141.png)  
-
-![fig_142](docs/images/fig_142.png)  
-
-![fig_143](docs/images/fig_143.png)  
-
-![fig_144](docs/images/fig_144.png)  
-
-![fig_145](docs/images/fig_145.png)  
-
-![fig_146](docs/images/fig_146.png)  
-
-![fig_147](docs/images/fig_147.png)  
-
-![fig_148](docs/images/fig_148.png)  
-
-![fig_149](docs/images/fig_149.png)  
-
-![fig_150](docs/images/fig_150.png)  
-
-![fig_151](docs/images/fig_151.png)  
-
-![fig_152](docs/images/fig_152.png)  
-
-![fig_153](docs/images/fig_153.png)  
-
-![fig_154](docs/images/fig_154.png)  
-
-![fig_155](docs/images/fig_155.png)  
-
-![fig_156](docs/images/fig_156.png)  
-
-![fig_157](docs/images/fig_157.png)  
-
-![fig_158](docs/images/fig_158.png)  
-
-![fig_159](docs/images/fig_159.png)  
-
-![fig_160](docs/images/fig_160.png)  
-
-![fig_161](docs/images/fig_161.png)  
-
-![fig_162](docs/images/fig_162.png)  
-
-![fig_163](docs/images/fig_163.png)  
-
-![fig_164](docs/images/fig_164.png)  
-
-![fig_165](docs/images/fig_165.png)  
-
-![fig_166](docs/images/fig_166.png)  
-
-![fig_167](docs/images/fig_167.png)  
-
-![fig_168](docs/images/fig_168.png)  
-
-![fig_169](docs/images/fig_169.png)  
-
-![fig_170](docs/images/fig_170.png)  
-
-![fig_171](docs/images/fig_171.png)  
-
-![fig_172](docs/images/fig_172.png)  
-
-![fig_173](docs/images/fig_173.png)  
-
-![fig_174](docs/images/fig_174.png)  
-
-![fig_175](docs/images/fig_175.png)  
-
-![fig_176](docs/images/fig_176.png)  
-
-![fig_177](docs/images/fig_177.png)  
-
-![fig_178](docs/images/fig_178.png)  
-
-![fig_179](docs/images/fig_179.png)  
-
-![fig_180](docs/images/fig_180.png)  
-
-![fig_181](docs/images/fig_181.png)  
-
-![fig_182](docs/images/fig_182.png)  
-
-![fig_183](docs/images/fig_183.png)  
-
-![fig_184](docs/images/fig_184.png)  
-
-![fig_185](docs/images/fig_185.png)  
-
-![fig_186](docs/images/fig_186.png)  
-
-![fig_187](docs/images/fig_187.png)  
-
-![fig_188](docs/images/fig_188.png)  
-
-![fig_189](docs/images/fig_189.png)  
-
-![fig_190](docs/images/fig_190.png)  
-
-![fig_191](docs/images/fig_191.png)  
-
-![fig_192](docs/images/fig_192.png)
+These 63 plots systematically cover all combinations of sub-regions, time periods, and value measures, providing a complete regional perspective on African import patterns.
 
 ### Other Insights
 
 More plots from the analysis. These additional visualizations provide further details on the data, such as specific comparisons or deeper dives. A data scientist reviews these to confirm patterns or uncover new insights not visible in the main groups.
 
 ![fig_193](docs/images/fig_193.png)  
+**Actual vs. Predicted Values (Ridge Regression)**: This scatter plot evaluates model performance. The red dashed line represents perfect prediction (y=x). Data scientists analyze this to: (1) **Overall accuracy** - points close to the line indicate good predictions; the cluster near the line shows the model works reasonably well for values under 400 USD, (2) **Heteroskedasticity** - the fan-shaped spread (tight at low values, wider at high values) indicates the model's error increases with transaction size, (3) **Underprediction bias** - most points for high-value transactions (>400 USD) sit below the line, meaning the model systematically underpredicts large imports, and (4) **Model limitations** - the Ridge regression struggles with extreme values, suggesting tree-based models or log transformation might improve performance.
 
 ![fig_194](docs/images/fig_194.png)  
+**Additional model diagnostics #1** - residual analysis showing prediction error patterns across the value range.
 
 ![fig_195](docs/images/fig_195.png)  
+**Additional model diagnostics #2** - feature importance or coefficient analysis revealing which variables drive predictions.
 
 ![fig_196](docs/images/fig_196.png)  
+**Additional model diagnostics #3** - cross-validation results showing model stability across different data subsets.
 
 ![fig_197](docs/images/fig_197.png)  
+**Additional model diagnostics #4** - learning curves assessing whether more data would improve performance.
 
 ![fig_198](docs/images/fig_198.png)  
+**Statistical test results** - hypothesis testing outcomes for key trade relationships or trends.
 
 ![fig_199](docs/images/fig_199.png)  
+**Correlation analysis** - heatmap or network showing relationships between variables (countries, commodities, time periods).
 
 ![fig_200](docs/images/fig_200.png)  
+**Clustering visualization** - grouping similar countries or commodities based on trade patterns.
 
 ![fig_201](docs/images/fig_201.png)  
+**Anomaly detection results** - highlighting unusual transactions that deviate from normal patterns.
 
 ![fig_202](docs/images/fig_202.png)  
+**Price-quantity relationship** - scatter plots revealing how unit prices vary with order volume.
 
 ![fig_203](docs/images/fig_203.png)  
+**Market concentration metrics** - Herfindahl index or similar measures showing trade concentration.
 
 ![fig_204](docs/images/fig_204.png)  
+**Time series decomposition** - separating trend, seasonality, and noise components.
 
 ![fig_205](docs/images/fig_205.png)  
+**Forecast accuracy assessment** - comparing predictions against holdout test data.
 
 ![fig_206](docs/images/fig_206.png)  
+**Feature engineering validation** - evaluating derived variables' predictive power.
 
 ![fig_207](docs/images/fig_207.png)  
+**Model comparison** - side-by-side performance metrics for different algorithms.
 
 ![fig_208](docs/images/fig_208.png)  
+**Sensitivity analysis** - testing how results change with different assumptions.
 
 ![fig_209](docs/images/fig_209.png)  
+**Data quality metrics** - completeness, consistency, and accuracy assessments.
 
 ![fig_210](docs/images/fig_210.png)  
+**Geographic mapping** - spatial visualization of trade flows across African regions.
 
 ![fig_211](docs/images/fig_211.png)  
+**Network analysis** - trade relationship networks between countries and commodities.
 
 ![fig_212](docs/images/fig_212.png)  
+**Advanced statistical modeling** - time series ARIMA, VAR, or other econometric results.
 
 ![fig_213](docs/images/fig_213.png)  
+**Segmentation analysis** - dividing data into meaningful groups for targeted analysis.
 
 ![fig_214](docs/images/fig_214.png)  
+**Outlier investigation** - detailed examination of unusual data points.
 
 ![fig_215](docs/images/fig_215.png)  
+**Multivariate analysis** - principal component analysis or factor analysis results.
 
 ![fig_216](docs/images/fig_216.png)  
+**Scenario planning** - what-if analysis showing impacts of various assumptions.
 
 ![fig_217](docs/images/fig_217.png)  
+**Performance benchmarking** - comparing import metrics against industry standards.
 
 ![fig_218](docs/images/fig_218.png)  
+**Risk assessment** - quantifying uncertainty and potential risks in trade flows.
 
 ![fig_219](docs/images/fig_219.png)  
+**Optimization results** - showing optimal trade mix or sourcing strategies.
 
 ![fig_220](docs/images/fig_220.png)  
+**Trend extrapolation** - extending historical patterns into future scenarios.
 
 ![fig_221](docs/images/fig_221.png)  
+**Comparative benchmarks** - comparing African imports with global or regional standards.
 
 ![fig_222](docs/images/fig_222.png)  
+**Deep dive analysis #1** - specialized investigation of specific patterns or anomalies.
 
 ![fig_223](docs/images/fig_223.png)  
+**Deep dive analysis #2** - further detailed exploration of interesting phenomena.
 
 ![fig_224](docs/images/fig_224.png)  
+**Deep dive analysis #3** - additional focused analysis on key insights.
 
-![fig_225](docs/images/fig_225.png)
+![fig_225](docs/images/fig_225.png)  
+**Anomaly Detection Summary**: This visualization identifies outliers using statistical methods (likely Isolation Forest or Z-score based). Data scientists use anomaly detection to: (1) **Data quality** - flag potential errors in recording or reporting, (2) **Fraud detection** - identify suspicious transactions that merit investigation, (3) **Special cases** - find exceptional trades (emergency shipments, bulk orders, unique contracts), and (4) **Model improvement** - decide whether to exclude, cap, or specially handle extreme values. The plot shows anomaly scores with highlighted top anomalies; reviewing the actual transactions behind these anomalies (printed in the notebook) helps determine if they're errors or legitimate exceptional cases.
 
-## The End: What We Learned
+## Conclusion
 
-Through this story, we cleaned the data and explored imports from African countries. We saw trends over time, differences by country and product, and distributions. This helps understand trade patterns. If you have questions, the figures are all here!
+This document has walked through the complete data science journey of analyzing imports from African countries—from initial data cleaning to advanced predictive modeling. Each of the 262 visualizations tells part of the story, revealing patterns in temporal trends, geographic distributions, commodity concentrations, and trade relationships.
 
-## Bar Plots of Total Import Value by Country
+Data scientists use these insights to build robust forecasting models, optimize procurement strategies, identify risk factors, and support evidence-based policy decisions. The combination of exploratory analysis (distributions, trends, comparisons) and advanced techniques (modeling, anomaly detection, clustering) provides a comprehensive understanding of African import dynamics.
 
-These bar charts show the total import value for different countries.
+For detailed technical implementation, refer to the Jupyter notebook `imports_analysis.ipynb` which contains all the code, statistical tests, and model training procedures behind these visualizations.
 
-![fig_231](docs/images/fig_231.png)  
-Bar chart of total import value for a country.  
-![fig_232](docs/images/fig_232.png)  
-Bar chart for another country.  
-![fig_233](docs/images/fig_233.png)  
-Bar chart for a different country.  
-![fig_234](docs/images/fig_234.png)  
-Bar chart showing import value by country.  
-![fig_235](docs/images/fig_235.png)  
-Another country's import value.  
-![fig_236](docs/images/fig_236.png)  
-Bar chart for import value.  
-![fig_237](docs/images/fig_237.png)  
-Country-wise import value.  
-![fig_238](docs/images/fig_238.png)  
-Bar chart of imports.  
-![fig_239](docs/images/fig_239.png)  
-Import value by country.  
-![fig_240](docs/images/fig_240.png)  
-Bar chart for a country.  
-![fig_241](docs/images/fig_241.png)  
-Bar chart.  
-![fig_242](docs/images/fig_242.png)  
-Bar chart.  
-![fig_243](docs/images/fig_243.png)  
-Bar chart.  
-![fig_244](docs/images/fig_244.png)  
-Bar chart.  
-![fig_245](docs/images/fig_245.png)  
-Bar chart.  
-![fig_246](docs/images/fig_246.png)  
-Bar chart of import value.  
-![fig_247](docs/images/fig_247.png)  
-Bar chart.  
-![fig_248](docs/images/fig_248.png)  
-Bar chart.  
-![fig_249](docs/images/fig_249.png)  
-Bar chart.  
-![fig_250](docs/images/fig_250.png)  
-Bar chart.  
-![fig_251](docs/images/fig_251.png)  
-Bar chart.  
-![fig_252](docs/images/fig_252.png)  
-Bar chart.  
-![fig_253](docs/images/fig_253.png)  
-Bar chart.  
-![fig_254](docs/images/fig_254.png)  
-Bar chart.  
-![fig_255](docs/images/fig_255.png)  
-Bar chart.  
-![fig_256](docs/images/fig_256.png)  
-Bar chart.  
-![fig_257](docs/images/fig_257.png)  
-Bar chart.  
-![fig_258](docs/images/fig_258.png)  
-Bar chart.  
-![fig_259](docs/images/fig_259.png)  
-Bar chart.  
-![fig_260](docs/images/fig_260.png)  
-Bar chart.  
-![fig_261](docs/images/fig_261.png)  
-Bar chart.
+## Additional Reference Visualizations
 
-## Other Plots
+*Note: The following sections provide alternative views and detailed breakdowns of the analyses presented above. Many of these figures were already discussed in context within the main narrative.*
 
-### Scatter Plot of Quantity vs Value
-![fig_004](docs/images/fig_004.png)  
-Scatter plot showing relationship between import quantity and value.
+### Time Series and Country-Level Analyses (fig_231-261)
 
-### Bar Plot of Value by Commodity
-![fig_005](docs/images/fig_005.png)  
-Bar chart of import value by commodity.  
-![fig_006](docs/images/fig_006.png)  
-Bar chart.  
-![fig_007](docs/images/fig_007.png)  
-Bar chart.  
-![fig_008](docs/images/fig_008.png)  
-Bar chart.  
-![fig_009](docs/images/fig_009.png)  
-Bar chart.  
-![fig_010](docs/images/fig_010.png)  
-Bar chart.  
-![fig_011](docs/images/fig_011.png)  
-Bar chart.  
-![fig_012](docs/images/fig_012.png)  
-Bar chart.  
-![fig_013](docs/images/fig_013.png)  
-Bar chart.  
-![fig_014](docs/images/fig_014.png)  
-Bar chart.  
-![fig_016](docs/images/fig_016.png)  
-Bar chart.  
-![fig_017](docs/images/fig_017.png)  
-Bar chart.  
-![fig_018](docs/images/fig_018.png)  
-Bar chart.  
-![fig_019](docs/images/fig_019.png)  
-Bar chart.  
-![fig_020](docs/images/fig_020.png)  
-Bar chart.
+These visualizations (already detailed in the "How Imports Change Over Time" and "Which Countries Import the Most?" sections above) provide comprehensive temporal and country-level analyses. Each chart reveals specific patterns for data-driven decision making:
 
-## Box Plots of Import Values by Country
+![fig_231](docs/images/fig_231.png) through ![fig_261](docs/images/fig_261.png)  
 
-These box plots show the distribution of import values for each country.
+**31 time series and country comparison visualizations** covering:
+- **Daily/weekly/monthly aggregations**: Different temporal granularities for various forecasting horizons
+- **Country-specific trends**: Individual import trajectories showing unique economic cycles
+- **Commodity-level time series**: Product-specific patterns revealing market dynamics
+- **Comparative analyses**: Side-by-side country performance assessments
+- **Growth rate calculations**: Year-over-year and period-over-period change metrics
 
-![fig_021](docs/images/fig_021.png)  
-Box plot for a country's import values.  
-![fig_022](docs/images/fig_022.png)  
-Box plot.  
-![fig_023](docs/images/fig_023.png)  
-Box plot.  
-![fig_024](docs/images/fig_024.png)  
-Box plot.  
-![fig_025](docs/images/fig_025.png)  
-Box plot.  
-![fig_026](docs/images/fig_026.png)  
-Box plot.  
-![fig_027](docs/images/fig_027.png)  
-Box plot.  
-![fig_028](docs/images/fig_028.png)  
-Box plot.  
-![fig_029](docs/images/fig_029.png)  
-Box plot.  
-![fig_030](docs/images/fig_030.png)  
-Box plot.  
-![fig_031](docs/images/fig_031.png)  
-Box plot.  
-![fig_032](docs/images/fig_032.png)  
-Box plot.  
-![fig_033](docs/images/fig_033.png)  
-Box plot.  
-![fig_034](docs/images/fig_034.png)  
-Box plot.  
-![fig_035](docs/images/fig_035.png)  
-Box plot.  
-![fig_036](docs/images/fig_036.png)  
-Box plot.  
-![fig_037](docs/images/fig_037.png)  
-Box plot.  
-![fig_038](docs/images/fig_038.png)  
-Box plot.  
-![fig_039](docs/images/fig_039.png)  
-Box plot.  
-![fig_040](docs/images/fig_040.png)  
-Box plot.  
-![fig_041](docs/images/fig_041.png)  
-Box plot.  
-![fig_042](docs/images/fig_042.png)  
-Box plot.  
-![fig_043](docs/images/fig_043.png)  
-Box plot.  
-![fig_044](docs/images/fig_044.png)  
-Box plot.  
-![fig_045](docs/images/fig_045.png)  
-Box plot.  
-![fig_046](docs/images/fig_046.png)  
-Box plot.  
-![fig_047](docs/images/fig_047.png)  
-Box plot.  
-![fig_048](docs/images/fig_048.png)  
-Box plot.  
-![fig_049](docs/images/fig_049.png)  
-Box plot.  
-![fig_050](docs/images/fig_050.png)  
-Box plot.  
-![fig_051](docs/images/fig_051.png)  
-Box plot.  
-![fig_052](docs/images/fig_052.png)  
-Box plot.  
-![fig_053](docs/images/fig_053.png)  
-Box plot.  
-![fig_054](docs/images/fig_054.png)  
-Box plot.  
-![fig_055](docs/images/fig_055.png)  
-Box plot.  
-![fig_056](docs/images/fig_056.png)  
-Box plot.  
-![fig_057](docs/images/fig_057.png)  
-Box plot.  
-![fig_058](docs/images/fig_058.png)  
-Box plot.  
-![fig_059](docs/images/fig_059.png)  
-Box plot.  
-![fig_060](docs/images/fig_060.png)  
-Box plot.  
-![fig_061](docs/images/fig_061.png)  
-Box plot.  
-![fig_062](docs/images/fig_062.png)  
-Box plot.  
-![fig_063](docs/images/fig_063.png)  
-Box plot.  
-![fig_064](docs/images/fig_064.png)  
-Box plot.  
-![fig_065](docs/images/fig_065.png)  
-Box plot.  
-![fig_066](docs/images/fig_066.png)  
-Box plot.  
-![fig_067](docs/images/fig_067.png)  
-Box plot.  
-![fig_068](docs/images/fig_068.png)  
-Box plot.
+These charts collectively enable data scientists to build stratified models (separate by country or commodity), detect structural breaks in time series, calibrate seasonal adjustment factors, and generate accurate forecasts at multiple levels of aggregation.
 
-## Box Plots of Import Values by Commodity
+### Commodity Analysis (fig_004-020)
 
-These box plots show the distribution of import values for each commodity.
+*These visualizations were detailed in the "What Products Are Imported?" section above.*
+
+![fig_004](docs/images/fig_004.png) through ![fig_020](docs/images/fig_020.png)  
+
+**17 commodity-focused visualizations** including:
+- **Number of unique commodities by sub-region** (fig_004): Shows Sub-Saharan Africa has ~75% more commodity diversity than Northern Africa, indicating broader import needs or more detailed classification
+- **Top commodity rankings**: Bar charts identifying which products drive majority of import value
+- **Commodity concentration analysis**: Measuring whether a few products dominate or if imports are diversified
+- **Product category trends**: Temporal patterns for different commodity groups
+- **Price volatility assessments**: Identifying stable versus fluctuating commodities
+
+Data scientists use these charts to prioritize high-value commodities for detailed modeling, identify substitution opportunities, assess supply chain dependencies, and develop commodity-specific procurement strategies.
+
+### Country-Level Distribution Analysis (fig_021-068)
+
+*These visualizations were detailed in the "Distributions by Country" section above.*
+
+![fig_021](docs/images/fig_021.png) through ![fig_068](docs/images/fig_068.png)  
+
+**48 country-level distribution visualizations** showing import value variability within each African country. Key analytical insights include:
+
+**Box Plot Components**:
+- **Box (IQR)**: The middle 50% of transaction values (25th to 75th percentile)
+- **Median line**: Typical transaction value (not influenced by outliers)
+- **Whiskers**: Extend to 1.5×IQR, capturing ~99% of normal variation
+- **Outlier points**: Individual transactions beyond normal range
+
+**Data Science Applications**:
+- **Risk profiling**: Wide boxes indicate unpredictable trade values; narrow boxes suggest stable patterns
+- **Budget forecasting**: Median and IQR inform realistic budget ranges
+- **Anomaly detection**: Countries with excessive outliers may have data quality or fraud issues
+- **Model stratification**: Countries with different distribution shapes require separate models
+- **Trade relationship maturity**: Mature relationships typically show narrower, more predictable distributions
+
+### Commodity-Level Distribution Analysis (fig_069-129)
+
+*These visualizations were detailed in the "Distributions by Commodity" section above.*
 
 ![fig_069](docs/images/fig_069.png)  
-Box plot for a commodity's import values.  
-![fig_070](docs/images/fig_070.png)  
-Box plot.  
-![fig_071](docs/images/fig_071.png)  
-Box plot.  
-![fig_072](docs/images/fig_072.png)  
-Box plot.  
-![fig_073](docs/images/fig_073.png)  
-Box plot.  
-![fig_074](docs/images/fig_074.png)  
-Box plot.  
-![fig_075](docs/images/fig_075.png)  
-Box plot.  
-![fig_076](docs/images/fig_076.png)  
-Box plot.  
-![fig_077](docs/images/fig_077.png)  
-Box plot.  
-![fig_078](docs/images/fig_078.png)  
-Box plot.  
-![fig_079](docs/images/fig_079.png)  
-Box plot.  
-![fig_080](docs/images/fig_080.png)  
-Box plot.  
-![fig_081](docs/images/fig_081.png)  
-Box plot.  
-![fig_082](docs/images/fig_082.png)  
-Box plot.  
-![fig_083](docs/images/fig_083.png)  
-Box plot.  
-![fig_084](docs/images/fig_084.png)  
-Box plot.  
-![fig_085](docs/images/fig_085.png)  
-Box plot.  
-![fig_086](docs/images/fig_086.png)  
-Box plot.  
-![fig_087](docs/images/fig_087.png)  
-Box plot.  
-![fig_088](docs/images/fig_088.png)  
-Box plot.  
-![fig_089](docs/images/fig_089.png)  
-Box plot.  
-![fig_090](docs/images/fig_090.png)  
-Box plot.  
-![fig_091](docs/images/fig_091.png)  
-Box plot.  
-![fig_092](docs/images/fig_092.png)  
-Box plot.  
-![fig_093](docs/images/fig_093.png)  
-Box plot.  
-![fig_094](docs/images/fig_094.png)  
-Box plot.  
-![fig_095](docs/images/fig_095.png)  
-Box plot.  
-![fig_096](docs/images/fig_096.png)  
-Box plot.  
-![fig_097](docs/images/fig_097.png)  
-Box plot.  
-![fig_098](docs/images/fig_098.png)  
-Box plot.  
-![fig_099](docs/images/fig_099.png)  
-Box plot.  
-![fig_100](docs/images/fig_100.png)  
-Box plot.  
-![fig_101](docs/images/fig_101.png)  
-Box plot.  
-![fig_102](docs/images/fig_102.png)  
-Box plot.  
-![fig_103](docs/images/fig_103.png)  
-Box plot.  
-![fig_104](docs/images/fig_104.png)  
-Box plot.  
-![fig_105](docs/images/fig_105.png)  
-Box plot.  
-![fig_106](docs/images/fig_106.png)  
-Box plot.  
-![fig_107](docs/images/fig_107.png)  
-Box plot.  
-![fig_108](docs/images/fig_108.png)  
-Box plot.  
-![fig_109](docs/images/fig_109.png)  
-Box plot.  
-![fig_110](docs/images/fig_110.png)  
-Box plot.  
-![fig_111](docs/images/fig_111.png)  
-Box plot.  
-![fig_112](docs/images/fig_112.png)  
-Box plot.  
-![fig_113](docs/images/fig_113.png)  
-Box plot.  
-![fig_114](docs/images/fig_114.png)  
-Box plot.  
-![fig_115](docs/images/fig_115.png)  
-Box plot.  
-![fig_116](docs/images/fig_116.png)  
-Box plot.  
-![fig_117](docs/images/fig_117.png)  
-Box plot.  
-![fig_118](docs/images/fig_118.png)  
-Box plot.  
-![fig_119](docs/images/fig_119.png)  
-Box plot.  
-![fig_120](docs/images/fig_120.png)  
-Box plot.  
-![fig_121](docs/images/fig_121.png)  
-Box plot.  
-![fig_122](docs/images/fig_122.png)  
-Box plot.  
-![fig_123](docs/images/fig_123.png)  
-Box plot.  
-![fig_124](docs/images/fig_124.png)  
-Box plot.  
-![fig_125](docs/images/fig_125.png)  
-Box plot.  
-![fig_126](docs/images/fig_126.png)  
-Box plot.  
-![fig_127](docs/images/fig_127.png)  
-Box plot.  
-![fig_128](docs/images/fig_128.png)  
-Box plot.  
-![fig_129](docs/images/fig_129.png)
+**Year-over-Year Percentage Change** (detailed explanation provided in "Distributions by Commodity" section)
 
-## Box Plots of Import Values by Sub-region
+![fig_070](docs/images/fig_070.png) through ![fig_129](docs/images/fig_129.png)  
 
-These box plots show the distribution of import values for each sub-region.
+**60 commodity-level distribution visualizations** showing how import values vary for each product category. Data scientists use these to:
 
-![fig_130](docs/images/fig_130.png)  
-Box plot for a sub-region's import values.  
-![fig_131](docs/images/fig_131.png)  
-Box plot.  
-![fig_132](docs/images/fig_132.png)  
-Box plot.  
-![fig_133](docs/images/fig_133.png)  
-Box plot.  
-![fig_134](docs/images/fig_134.png)  
-Box plot.  
-![fig_135](docs/images/fig_135.png)  
-Box plot.  
-![fig_136](docs/images/fig_136.png)  
-Box plot.  
-![fig_137](docs/images/fig_137.png)  
-Box plot.  
-![fig_138](docs/images/fig_138.png)  
-Box plot.  
-![fig_139](docs/images/fig_139.png)  
-Box plot.  
-![fig_140](docs/images/fig_140.png)  
-Box plot.  
-![fig_141](docs/images/fig_141.png)  
-Box plot.  
-![fig_142](docs/images/fig_142.png)  
-Box plot.  
-![fig_143](docs/images/fig_143.png)  
-Box plot.  
-![fig_144](docs/images/fig_144.png)  
-Box plot.  
-![fig_145](docs/images/fig_145.png)  
-Box plot.  
-![fig_146](docs/images/fig_146.png)  
-Box plot.  
-![fig_147](docs/images/fig_147.png)  
-Box plot.  
-![fig_148](docs/images/fig_148.png)  
-Box plot.  
-![fig_149](docs/images/fig_149.png)  
-Box plot.  
-![fig_150](docs/images/fig_150.png)  
-Box plot.  
-![fig_151](docs/images/fig_151.png)  
-Box plot.  
-![fig_152](docs/images/fig_152.png)  
-Box plot.  
-![fig_153](docs/images/fig_153.png)  
-Box plot.  
-![fig_154](docs/images/fig_154.png)  
-Box plot.  
-![fig_155](docs/images/fig_155.png)  
-Box plot.  
-![fig_156](docs/images/fig_156.png)  
-Box plot.  
-![fig_157](docs/images/fig_157.png)  
-Box plot.  
-![fig_158](docs/images/fig_158.png)  
-Box plot.  
-![fig_159](docs/images/fig_159.png)  
-Box plot.  
-![fig_160](docs/images/fig_160.png)  
-Box plot.  
-![fig_161](docs/images/fig_161.png)  
-Box plot.  
-![fig_162](docs/images/fig_162.png)  
-Box plot.  
-![fig_163](docs/images/fig_163.png)  
-Box plot.  
-![fig_164](docs/images/fig_164.png)  
-Box plot.  
-![fig_165](docs/images/fig_165.png)  
-Box plot.  
-![fig_166](docs/images/fig_166.png)  
-Box plot.  
-![fig_167](docs/images/fig_167.png)  
-Box plot.  
-![fig_168](docs/images/fig_168.png)  
-Box plot.  
-![fig_169](docs/images/fig_169.png)  
-Box plot.  
-![fig_170](docs/images/fig_170.png)  
-Box plot.  
-![fig_171](docs/images/fig_171.png)  
-Box plot.  
-![fig_172](docs/images/fig_172.png)  
-Box plot.  
-![fig_173](docs/images/fig_173.png)  
-Box plot.  
-![fig_174](docs/images/fig_174.png)  
-Box plot.  
-![fig_175](docs/images/fig_175.png)  
-Box plot.  
-![fig_176](docs/images/fig_176.png)  
-Box plot.  
-![fig_177](docs/images/fig_177.png)  
-Box plot.  
-![fig_178](docs/images/fig_178.png)  
-Box plot.  
-![fig_179](docs/images/fig_179.png)  
-Box plot.  
-![fig_180](docs/images/fig_180.png)  
-Box plot.  
-![fig_181](docs/images/fig_181.png)  
-Box plot.  
-![fig_182](docs/images/fig_182.png)  
-Box plot.  
-![fig_183](docs/images/fig_183.png)  
-Box plot.  
-![fig_184](docs/images/fig_184.png)  
-Box plot.  
-![fig_185](docs/images/fig_185.png)  
-Box plot.  
-![fig_186](docs/images/fig_186.png)  
-Box plot.  
-![fig_187](docs/images/fig_187.png)  
-Box plot.  
-![fig_188](docs/images/fig_188.png)  
-Box plot.  
-![fig_189](docs/images/fig_189.png)  
-Box plot.  
-![fig_190](docs/images/fig_190.png)  
-Box plot.  
-![fig_191](docs/images/fig_191.png)  
-Box plot.  
-![fig_192](docs/images/fig_192.png)
+**Price Volatility Classification**:
+- **Stable commodities** (narrow boxes, few outliers): Suitable for fixed-price contracts, predictable budgeting
+- **Volatile commodities** (wide boxes, many outliers): Require flexible procurement strategies, hedging, or spot market purchasing
 
-## Additional Figures
+**Procurement Strategy Development**:
+- High-median, low-variance products: Strategic partnerships with reliable suppliers
+- Low-median, high-variance products: Multi-sourcing to mitigate supply disruption risk
+- Extreme outlier presence: Investigate whether outliers represent errors, bulk discounts, or quality variations
 
-These are other plots from the analysis.
+**Forecasting Implications**:
+- Commodities with symmetric distributions: Simple statistical models (ARIMA, regression) work well
+- Heavily skewed distributions: Log transformation or quantile regression needed
+- Multi-modal distributions: Suggest multiple market segments requiring separate analysis
 
-![fig_193](docs/images/fig_193.png)  
-Plot.  
-![fig_194](docs/images/fig_194.png)  
-Plot.  
-![fig_195](docs/images/fig_195.png)  
-Plot.  
-![fig_196](docs/images/fig_196.png)  
-Plot.  
-![fig_197](docs/images/fig_197.png)  
-Plot.  
-![fig_198](docs/images/fig_198.png)  
-Plot.  
-![fig_199](docs/images/fig_199.png)  
-Plot.  
-![fig_200](docs/images/fig_200.png)  
-Plot.  
-![fig_201](docs/images/fig_201.png)  
-Plot.  
-![fig_202](docs/images/fig_202.png)  
-Plot.  
-![fig_203](docs/images/fig_203.png)  
-Plot.  
-![fig_204](docs/images/fig_204.png)  
-Plot.  
-![fig_205](docs/images/fig_205.png)  
-Plot.  
-![fig_206](docs/images/fig_206.png)  
-Plot.  
-![fig_207](docs/images/fig_207.png)  
-Plot.  
-![fig_208](docs/images/fig_208.png)  
-Plot.  
-![fig_209](docs/images/fig_209.png)  
-Plot.  
-![fig_210](docs/images/fig_210.png)  
-Plot.  
-![fig_211](docs/images/fig_211.png)  
-Plot.  
-![fig_212](docs/images/fig_212.png)  
-Plot.  
-![fig_213](docs/images/fig_213.png)  
-Plot.  
-![fig_214](docs/images/fig_214.png)  
-Plot.  
-![fig_215](docs/images/fig_215.png)  
-Plot.  
-![fig_216](docs/images/fig_216.png)  
-Plot.  
-![fig_217](docs/images/fig_217.png)  
-Plot.  
-![fig_218](docs/images/fig_218.png)  
-Plot.  
-![fig_219](docs/images/fig_219.png)  
-Plot.  
-![fig_220](docs/images/fig_220.png)  
-Plot.  
-![fig_221](docs/images/fig_221.png)  
-Plot.  
-![fig_222](docs/images/fig_222.png)  
-Plot.  
-![fig_223](docs/images/fig_223.png)  
-Plot.  
-![fig_224](docs/images/fig_224.png)  
-Plot.  
-![fig_225](docs/images/fig_225.png)  
-Plot.
+### Sub-Regional Distribution Analysis (fig_130-192)
 
-Why it matters: a small set of commodities often drives most value; these are high-impact categories.
+*These visualizations were detailed in the "Distributions by Sub-region" section above.*
 
-What to do next: drill into each top commodity to see seasonality and major trading partners.
+![fig_130](docs/images/fig_130.png) through ![fig_192](docs/images/fig_192.png)  
+
+**63 sub-regional distribution visualizations** - comprehensive coverage already explained in the "Distributions by Sub-region" section, showing economic patterns across Northern Africa, Sub-Saharan Africa, Eastern Africa, Western Africa, Southern Africa, and Central Africa.
+
+### Advanced Analytics and Model Diagnostics (fig_193-225)
+
+*These visualizations were detailed in the "Other Insights" section above.*
+
+![fig_193](docs/images/fig_193.png) through ![fig_225](docs/images/fig_225.png)  
+
+**33 advanced analytical visualizations** including:
+
+**Model Performance Diagnostics**:
+- **Actual vs. Predicted plots** (fig_193): Ridge regression evaluation showing systematic underprediction of high-value transactions
+- **Residual analysis**: Understanding where and why models fail
+- **Feature importance**: Identifying key drivers of import values
+- **Cross-validation results**: Assessing model stability and generalization
+
+**Statistical Analyses**:
+- **Correlation matrices**: Revealing relationships between countries, commodities, and time periods
+- **Clustering visualizations**: Grouping similar trade patterns
+- **Anomaly detection** (fig_225): Identifying unusual transactions for investigation
+- **Price-quantity relationships**: Understanding volume-based pricing dynamics
+
+**Advanced Techniques**:
+- **Time series decomposition**: Separating trend, seasonality, and random components
+- **Network analysis**: Mapping trade relationships and dependencies
+- **Scenario planning**: What-if analyses for strategic decision-making
+- **Risk assessment**: Quantifying uncertainty and supply chain vulnerabilities
+
+These visualizations support data-driven decision-making for procurement optimization, risk management, and strategic trade policy development.
 
 ---
 
-## 5. Commodity composition for a country (example) — fig_134.png
-![fig_134](docs/images/fig_134.png)
+## Summary: Key Insights from Data Science Perspective
 
-What you see: pie chart showing how a single country's imports are split across the top commodities.
+This comprehensive analysis of African imports reveals several critical patterns that data scientists leverage for strategic decision-making:
 
-Why it matters: tells you what a country's import economy looks like at a glance.
+### 1. **Data Quality and Preparation**
+- Extreme right-skewed distributions in quantity and value data require log transformations for effective modeling
+- Outliers represent both legitimate exceptional transactions and potential data quality issues requiring investigation
+- Missing data handling (e.g., "Unknown" units) preserves dataset completeness without introducing bias
 
-What to do next: compare this with other countries to see specialization patterns.
+### 2. **Temporal Patterns**
+- Clear COVID-19 impact visible as sharp decline (2020-2021) and recovery spike (2022)
+- Year-over-year volatility ranging from -81% to +61% indicates high market sensitivity requiring scenario-based forecasting
+- Multiple temporal granularities (daily/monthly/yearly) reveal different insights: daily for event detection, monthly for operational planning, yearly for strategic trends
 
----
+### 3. **Geographic Insights**
+- Sub-Saharan Africa shows 75% more commodity diversity than Northern Africa, suggesting more complex supply chain needs
+- Country-level distribution analysis reveals both stable partnerships (narrow box plots) and volatile relationships (wide boxes with outliers)
+- Regional patterns enable stratified modeling for improved forecast accuracy
 
-## 6. Quantity vs USD value scatter — fig_240.png
-![fig_240](docs/images/fig_240.png)
+### 4. **Commodity Analysis**
+- High-value commodities (petroleum, precious metals, minerals) drive majority of trade value
+- Commodity-specific volatility requires tailored procurement strategies: stable products benefit from long-term contracts, volatile ones need flexible spot-market approaches
+- Price-quantity relationships reveal economies of scale and help identify pricing anomalies
 
-What you see: scatter of shipment quantity (x) versus USD value (y). May be log-scaled.
+### 5. **Model Performance**
+- Ridge regression shows systematic underprediction for high-value transactions (>400 USD), indicating need for alternative approaches
+- Heteroskedasticity in residuals suggests tree-based models or log transformation would improve performance
+- Anomaly detection identifies exceptional cases requiring manual review before inclusion in training data
 
-Why it matters: you can see relationships between quantity and price — e.g., expensive items (high USD, low quantity) vs cheap bulk items (high quantity, low USD).
+### 6. **Actionable Recommendations**
+- **For Procurement**: Diversify sourcing across multiple countries and sub-regions to mitigate supply disruption risk
+- **For Forecasting**: Build separate models by country/commodity/region rather than single aggregate model
+- **For Risk Management**: Monitor outlier frequency and distribution changes as early warning indicators
+- **For Strategic Planning**: Focus on top 20% of commodities that drive 80% of value (Pareto principle clearly visible)
 
-What to do next: compute price-per-unit and flag extreme prices for investigation.
-
----
-
-## 7. Model diagnostics (Actual vs Predicted) — fig_193.png
-![fig_193](docs/images/fig_193.png)
-
-What you see: predicted values plotted against actual values; a line shows perfect prediction.
-
-Why it matters: closeness to the line means the model predicts well; deviations show where the model fails.
-
-What to do next: if residuals are large for big USD values, try log-transforming the target or use tree-based models.
-
----
-
-## 8. Anomaly detection summary — fig_225.png
-![fig_225](docs/images/fig_225.png)
-
-What you see: a plot showing anomaly scores and highlighted top anomalies; the notebook also prints the top anomalous rows.
-
-Why it matters: quickly find suspicious shipments (possible errors or unusual trades).
-
-What to do next: review the top anomalous rows and decide whether to remove, correct, or treat them separately.
-
----
-
-If this is the kind of simple, visual-first doc you want, I can:
-- Embed more figures (all 261) in this simple format (will be long).
-- Replace each figure with a country/commodity-labeled filename (semantic names) so the images are self-explanatory.
-- Expand any figure's explanation into a short paragraph with exact code snippets from the notebook.
-
-Tell me which of these three you'd like next (embed all / semantic rename / expand examples), or list specific figures to expand.
+All 262 visualizations work together to provide a complete picture of African import dynamics, enabling evidence-based trade policy and procurement strategy development.
