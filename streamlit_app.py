@@ -56,7 +56,27 @@ page = st.sidebar.radio("Go to", [
 # Page 1: Data Dashboard
 # ======================================================================
 if page == "Data Dashboard":
-    
+    st.title("📊 Data Dashboard")
+    st.write("Overview of Imports from African Countries Dataset")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Records", len(cleaned_df))
+    with col2:
+        st.metric("Unique Countries", cleaned_df['country_name'].nunique())
+    with col3:
+        st.metric("Unique Commodities", cleaned_df['commodity'].nunique())
+
+    st.subheader("Date Range")
+    st.write(f"From {cleaned_df['date'].min()} to {cleaned_df['date'].max()}")
+
+    st.subheader("Sample Data")
+    st.dataframe(cleaned_df.head(10))
+
+    st.subheader("Top Commodities by Value")
+    top_com = cleaned_df.groupby('commodity')['value_dl'].sum().nlargest(10)
+    st.bar_chart(top_com)
+
 
 # ======================================================================
 # Page 2: EDA Dashboard
@@ -372,35 +392,4 @@ elif page == "Advanced Dashboards":
             else:
                 st.warning("Insufficient data for basket forecast.")
 
-# ======================================================================
-# Page 4: Advanced Dashboards (continued)
-# ======================================================================
 
-# Sidebar navigation
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", [
-    "Data Dashboard",
-    "EDA Dashboard",
-    "Models & Novelty Dashboard"
-])
-
-
-    st.title("📊 Data Dashboard")
-    st.write("Overview of Imports from African Countries Dataset")
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Records", len(cleaned_df))
-    with col2:
-        st.metric("Unique Countries", cleaned_df['country_name'].nunique())
-    with col3:
-        st.metric("Unique Commodities", cleaned_df['commodity'].nunique())
-
-    st.subheader("Date Range")
-    st.write(f"From {cleaned_df['date'].min()} to {cleaned_df['date'].max()}")
-
-    st.subheader("Sample Data")
-    st.dataframe(cleaned_df.head(10))
-
-    st.subheader("Top Commodities by Value")
-    top_com = cleaned_df.groupby('commodity')['value_dl'].sum().nlargest(10)
