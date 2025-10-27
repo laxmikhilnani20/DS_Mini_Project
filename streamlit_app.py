@@ -1235,13 +1235,14 @@ elif page == "🎯 Interactive Models":
                 fillcolor='rgba(255, 107, 107, 0.2)'
             ))
             
-            # Add vertical line separating history from forecast
-            fig_forecast.add_vline(
-                x=last_date.strftime('%Y-%m-%d'),
-                line_dash="dash",
-                line_color="gray",
-                annotation_text="Forecast Starts",
-                annotation_position="top"
+            # Add annotation to mark forecast start (avoid add_vline compatibility issues)
+            fig_forecast.add_annotation(
+                x=last_date,
+                y=max(regression_data['value_dl'].max(), future_df['predicted_value'].max()),
+                text="← Historical | Forecast →",
+                showarrow=False,
+                yshift=10,
+                font=dict(size=12, color="gray")
             )
             
             fig_forecast.update_layout(
