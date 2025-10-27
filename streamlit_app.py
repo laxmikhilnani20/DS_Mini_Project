@@ -363,14 +363,28 @@ elif page == "🔍 EDA Explorer":
     st.markdown("---")
     st.markdown(f"## 📊 Analyzing: **{selected_commodity_eda}** from **{selected_country_eda}**")
     
+    # Smart formatting function for currency
+    def format_currency(value):
+        if value >= 1e9:
+            return f"${value/1e9:.2f}B"
+        elif value >= 1e6:
+            return f"${value/1e6:.2f}M"
+        elif value >= 1e3:
+            return f"${value/1e3:.2f}K"
+        else:
+            return f"${value:.2f}"
+    
     metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+    
+    total_value = eda_filtered['value_dl'].sum()
+    avg_value = eda_filtered['value_dl'].mean()
     
     with metric_col1:
         st.metric("Total Transactions", f"{len(eda_filtered):,}")
     with metric_col2:
-        st.metric("Total Value (USD)", f"${eda_filtered['value_dl'].sum()/1e6:.2f}M")
+        st.metric("Total Value (USD)", format_currency(total_value))
     with metric_col3:
-        st.metric("Avg Transaction", f"${eda_filtered['value_dl'].mean():,.0f}")
+        st.metric("Avg Transaction", format_currency(avg_value))
     with metric_col4:
         date_span = (eda_filtered['date'].max() - eda_filtered['date'].min()).days
         st.metric("Time Span (Days)", f"{date_span}")
