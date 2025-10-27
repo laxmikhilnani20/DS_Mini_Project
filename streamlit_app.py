@@ -1364,7 +1364,16 @@ elif page == "🎯 Interactive Models":
             feature_cols_trend = ['year', 'country_encoded', 'commodity_encoded', 
                                  'value_dl', 'value_lag1', 'yoy_growth', 'growth_lag1']
             
-            X_trend = trend_data[feature_cols_trend]
+            X_trend = trend_data[feature_cols_trend].copy()
+            
+            # Replace infinity and extreme values
+            X_trend = X_trend.replace([np.inf, -np.inf], np.nan)
+            X_trend = X_trend.fillna(0)
+            # Cap extremely large values
+            for col in X_trend.columns:
+                if X_trend[col].dtype in [np.float64, np.int64]:
+                    X_trend[col] = X_trend[col].clip(-1e10, 1e10)
+            
             y_trend = trend_data['trend_category']
             
             # Encode target
