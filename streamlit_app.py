@@ -1209,10 +1209,15 @@ elif page == "🎯 Interactive Models":
             X_class = classification_data[feature_cols_class]
             y_class = classification_data['value_category']
             
+            # Encode target labels for models that need numeric values
+            le_target = LabelEncoder()
+            y_class_encoded = le_target.fit_transform(y_class)
+            class_names = le_target.classes_
+            
             # Train-test split
             test_size_class = st.slider("Test Set Size (%)", 10, 40, 20, 5, key="class_test_size") / 100
             X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(
-                X_class, y_class, test_size=test_size_class, random_state=42, stratify=y_class
+                X_class, y_class_encoded, test_size=test_size_class, random_state=42, stratify=y_class_encoded
             )
             
             st.info(f"📊 Training on {len(X_train_c)} samples, Testing on {len(X_test_c)} samples")
@@ -1269,13 +1274,12 @@ elif page == "🎯 Interactive Models":
             st.markdown("#### 📊 Confusion Matrix")
             
             cm = confusion_matrix(y_test_c, clf_predictions[best_clf])
-            labels = sorted(y_class.unique())
             
             fig_cm = px.imshow(
                 cm,
                 labels=dict(x="Predicted", y="Actual", color="Count"),
-                x=labels,
-                y=labels,
+                x=class_names,
+                y=class_names,
                 text_auto=True,
                 color_continuous_scale='Blues',
                 title=f'Confusion Matrix - {best_clf}'
