@@ -522,7 +522,9 @@ elif page == "🔍 EDA Explorer":
         
         # Top countries
         st.markdown("#### Top Countries by Import Value")
-        top_n_countries = st.slider("Select number of countries to display:", min_value=5, max_value=50, value=15, step=5, key="top_countries_slider")
+        total_countries = df['country_name'].nunique()
+        st.info(f"📊 Total countries available: **{total_countries}**")
+        top_n_countries = st.slider("Select number of countries to display:", min_value=5, max_value=total_countries, value=min(15, total_countries), step=5, key="top_countries_slider")
         
         country_totals = df.groupby('country_name')['value_dl'].sum().sort_values(ascending=False).head(top_n_countries).reset_index()
         country_totals.columns = ['Country', 'Total Value (USD)']
@@ -573,7 +575,9 @@ elif page == "🔍 EDA Explorer":
         
         # Top commodities
         st.markdown("#### Top Commodities by Value")
-        top_n_commodities = st.slider("Select number of commodities to display:", min_value=5, max_value=50, value=20, step=5, key="top_commodities_slider")
+        total_commodities = df['commodity'].nunique()
+        st.info(f"📊 Total commodities available: **{total_commodities}**")
+        top_n_commodities = st.slider("Select number of commodities to display:", min_value=5, max_value=total_commodities, value=min(20, total_commodities), step=5, key="top_commodities_slider")
         
         commodity_totals = df.groupby('commodity')['value_dl'].sum().sort_values(ascending=False).head(top_n_commodities).reset_index()
         commodity_totals.columns = ['Commodity', 'Total Value (USD)']
@@ -591,7 +595,8 @@ elif page == "🔍 EDA Explorer":
         
         # Commodity diversity
         st.markdown("#### Commodity Diversity by Country")
-        top_n_diversity = st.slider("Select number of countries to display:", min_value=5, max_value=30, value=15, step=5, key="diversity_slider")
+        st.info(f"📊 Total countries available: **{total_countries}**")
+        top_n_diversity = st.slider("Select number of countries to display:", min_value=5, max_value=total_countries, value=min(15, total_countries), step=5, key="diversity_slider")
         
         diversity = df.groupby('country_name')['commodity'].nunique().sort_values(ascending=False).head(top_n_diversity).reset_index()
         diversity.columns = ['Country', 'Unique Commodities']
@@ -760,7 +765,9 @@ elif page == "🔍 EDA Explorer":
         st.markdown("### 🔗 Correlation Analysis")
         
         st.markdown("#### Top Commodities Correlation Matrix")
-        top_n_corr = st.slider("Select number of commodities for correlation:", min_value=5, max_value=30, value=15, step=5, key="correlation_slider")
+        total_commodities_corr = df['commodity'].nunique()
+        st.info(f"📊 Total commodities available: **{total_commodities_corr}**")
+        top_n_corr = st.slider("Select number of commodities for correlation:", min_value=5, max_value=min(50, total_commodities_corr), value=min(15, total_commodities_corr), step=5, key="correlation_slider")
         st.write(f"Analyzing correlation between import patterns of top {top_n_corr} commodities")
         
         # Get top commodities
@@ -1062,7 +1069,9 @@ elif page == "🎯 Interactive Models":
                 )
                 
                 # Show top commodities for context
-                top_n_ranking = st.slider("Number of top commodities to show:", min_value=5, max_value=30, value=10, step=5, key="ranking_slider")
+                total_country_commodities = len(country_commodities)
+                st.info(f"📊 Total commodities for this country: **{total_country_commodities}**")
+                top_n_ranking = st.slider("Number of top commodities to show:", min_value=5, max_value=total_country_commodities, value=min(10, total_country_commodities), step=5, key="ranking_slider")
                 st.markdown(f"**Top {top_n_ranking} Commodities for This Country:**")
                 top_n = country_commodities.head(top_n_ranking)
                 
