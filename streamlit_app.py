@@ -845,24 +845,35 @@ elif page == "🎯 Interactive Models":
         # Share over time
         st.markdown("#### Share Evolution Over Time")
         
-        # Calculate monthly share
+        # Calculate monthly share - need to align the data properly
         monthly_country = df[df['country_name'] == selected_country].resample('M', on='date')['value_dl'].sum()
         monthly_commodity = filtered_data.resample('M', on='date')['value_dl'].sum()
         
-        share_over_time = pd.DataFrame({
-            'Date': monthly_commodity.index,
-            'Share %': (monthly_commodity.values / monthly_country.values * 100)
-        })
-        
-        fig_share = px.line(
-            share_over_time,
-            x='Date',
-            y='Share %',
-            title=f'Monthly Share of {selected_commodity} in {selected_country} Imports',
-            labels={'Share %': 'Share of Total Imports (%)'}
+        # Merge on index to ensure same dates
+        share_data = pd.merge(
+            monthly_commodity.to_frame('commodity_value'),
+            monthly_country.to_frame('country_value'),
+            left_index=True,
+            right_index=True,
+            how='inner'
         )
-        fig_share.update_traces(line_color='#43A047', line_width=2)
-        st.plotly_chart(fig_share, use_container_width=True)
+        
+        if not share_data.empty:
+            share_data['Share %'] = (share_data['commodity_value'] / share_data['country_value'] * 100)
+            share_data = share_data.reset_index()
+            share_data.columns = ['Date', 'commodity_value', 'country_value', 'Share %']
+            
+            fig_share = px.line(
+                share_data,
+                x='Date',
+                y='Share %',
+                title=f'Monthly Share of {selected_commodity} in {selected_country} Imports',
+                labels={'Share %': 'Share of Total Imports (%)'}
+            )
+            fig_share.update_traces(line_color='#43A047', line_width=2)
+            st.plotly_chart(fig_share, use_container_width=True)
+        else:
+            st.info("No overlapping data for share calculation.")
     
     # ===== TAB 3: TEMPORAL PATTERNS =====
     with analysis_tabs[2]:
