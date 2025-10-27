@@ -4,3 +4,8 @@ numpy
 plotly
 scipy
 prophet
+scikit-learn
+xgboost
+lightgbm
+matplotlib
+seaborn

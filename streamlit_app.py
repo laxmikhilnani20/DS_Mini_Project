@@ -889,585 +889,630 @@ elif page == "🔍 EDA Explorer":
             fig_comm_conc.add_hline(y=80, line_dash="dash", annotation_text="80%")
             st.plotly_chart(fig_comm_conc, use_container_width=True)
 
-
 # ======================================================================
-# DASHBOARD 3: INTERACTIVE MODELS
+# DASHBOARD 3: INTERACTIVE MACHINE LEARNING MODELS
 # ======================================================================
 elif page == "🎯 Interactive Models":
-    st.markdown('<p class="main-header">🎯 Interactive Deep-Dive Analysis</p>', unsafe_allow_html=True)
-    st.markdown("### Select Country + Commodity for Detailed Insights")
+    st.markdown('<p class="main-header">🎯 Machine Learning Models</p>', unsafe_allow_html=True)
+    st.markdown("### Regression, Classification & Clustering Models for Trade Analysis")
+    
+    # Import ML libraries
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler, LabelEncoder
+    from sklearn.linear_model import LinearRegression, LogisticRegression
+    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+    from sklearn.cluster import KMeans, DBSCAN
+    from sklearn.metrics import (
+        mean_squared_error, mean_absolute_error, r2_score,
+        accuracy_score, precision_score, recall_score, f1_score, confusion_matrix,
+        silhouette_score
+    )
+    from sklearn.decomposition import PCA
+    import xgboost as xgb
     
     # === SELECTION PANEL ===
-    st.markdown("## 🎛️ Selection Panel")
+    st.markdown("## 🎛️ Data Selection")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("#### Select Country")
-        all_countries = sorted(df['country_name'].unique())
-        selected_country = st.selectbox(
-            "Choose a country:",
-            options=all_countries,
+        st.markdown("#### 🌍 Select Country (Optional)")
+        all_countries_ml = ['All Countries'] + sorted(df['country_name'].unique().tolist())
+        selected_country_ml = st.selectbox(
+            "Choose a country or analyze all:",
+            options=all_countries_ml,
             index=0,
-            key="model_country"
+            key="ml_country"
         )
     
     with col2:
-        st.markdown("#### Select Commodity")
-        # Filter commodities based on selected country
-        available_commodities = sorted(
-            df[df['country_name'] == selected_country]['commodity'].unique()
-        )
-        
-        if available_commodities:
-            selected_commodity = st.selectbox(
-                "Choose a commodity:",
-                options=available_commodities,
-                index=0,
-                key="model_commodity"
-            )
+        st.markdown("#### 📦 Select Commodity (Optional)")
+        if selected_country_ml == 'All Countries':
+            available_commodities_ml = ['All Commodities'] + sorted(df['commodity'].unique().tolist())
         else:
-            st.error("No commodities available for selected country")
-            st.stop()
+            available_commodities_ml = ['All Commodities'] + sorted(
+                df[df['country_name'] == selected_country_ml]['commodity'].unique().tolist()
+            )
+        
+        selected_commodity_ml = st.selectbox(
+            "Choose a commodity or analyze all:",
+            options=available_commodities_ml,
+            index=0,
+            key="ml_commodity"
+        )
     
-    # Filter data for selected combination
-    filtered_data = df[
-        (df['country_name'] == selected_country) &
-        (df['commodity'] == selected_commodity)
-    ].copy()
+    # Filter data based on selection
+    ml_data = df.copy()
+    if selected_country_ml != 'All Countries':
+        ml_data = ml_data[ml_data['country_name'] == selected_country_ml]
+    if selected_commodity_ml != 'All Commodities':
+        ml_data = ml_data[ml_data['commodity'] == selected_commodity_ml]
     
-    if filtered_data.empty:
-        st.warning("⚠️ No data available for this country-commodity combination.")
+    if ml_data.empty:
+        st.warning("⚠️ No data available for this selection.")
         st.stop()
     
-    # === KEY METRICS FOR SELECTION ===
+    # Display dataset info
     st.markdown("---")
-    st.markdown(f"## 📊 Analysis: **{selected_commodity}** from **{selected_country}**")
+    st.markdown(f"## 📊 Selected Dataset: **{len(ml_data):,}** transactions")
     
-    metric_col1, metric_col2, metric_col3, metric_col4, metric_col5 = st.columns(5)
+    info_col1, info_col2, info_col3, info_col4 = st.columns(4)
+    with info_col1:
+        st.metric("Countries", ml_data['country_name'].nunique())
+    with info_col2:
+        st.metric("Commodities", ml_data['commodity'].nunique())
+    with info_col3:
+        st.metric("Total Value", f"${ml_data['value_dl'].sum()/1e9:.2f}B")
+    with info_col4:
+        st.metric("Date Range", f"{ml_data['year'].min()}-{ml_data['year'].max()}")
     
-    with metric_col1:
-        total_transactions = len(filtered_data)
-        st.metric("Transactions", f"{total_transactions:,}")
+    st.markdown("---")
     
-    with metric_col2:
-        total_value = filtered_data['value_dl'].sum()
-        st.metric("Total Value", f"${total_value/1e6:.2f}M")
-    
-    with metric_col3:
-        avg_value = filtered_data['value_dl'].mean()
-        st.metric("Avg Value", f"${avg_value:,.0f}")
-    
-    with metric_col4:
-        total_quantity = filtered_data['value_qt'].sum()
-        st.metric("Total Quantity", f"{total_quantity:,.0f}")
-    
-    with metric_col5:
-        date_range = (filtered_data['date'].max() - filtered_data['date'].min()).days
-        st.metric("Days Span", f"{date_range}")
-    
-    # === TABBED ANALYSIS ===
-    analysis_tabs = st.tabs([
-        "📈 Trend Analysis",
-        "🎯 Contribution & Share",
-        "⏰ Temporal Patterns",
-        "💰 Value Insights",
-        "📊 Statistical Summary",
-        "🔮 Forecasting"
+    # === ML MODEL TABS ===
+    ml_tabs = st.tabs([
+        "📈 Regression Models",
+        "🎯 Classification Models", 
+        "🔍 Clustering Models"
     ])
     
-    # ===== TAB 1: TREND ANALYSIS =====
-    with analysis_tabs[0]:
-        st.markdown("### 📈 Historical Trend Analysis")
+    # ========================================================================
+    # TAB 1: REGRESSION MODELS
+    # ========================================================================
+    with ml_tabs[0]:
+        st.markdown("### 📈 Regression: Predict Import Values")
         
-        # Monthly trend
-        monthly_data = filtered_data.resample('M', on='date')['value_dl'].sum().reset_index()
-        monthly_data.columns = ['Date', 'Value']
+        st.markdown("""
+        <div class="insight-box">
+        <h4>🎓 What is Regression?</h4>
+        <p>Regression models predict <b>continuous numerical values</b>. Here, we predict future import values based on historical patterns.</p>
+        <p><b>Use Cases:</b> Demand forecasting, budget planning, price prediction</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        if len(monthly_data) > 0:
-            fig_trend = px.line(
-                monthly_data,
-                x='Date',
-                y='Value',
-                title=f'Monthly Import Value Trend: {selected_commodity} from {selected_country}',
-                labels={'Value': 'Import Value (USD)'}
-            )
-            fig_trend.update_traces(line_color='#1E88E5', line_width=2.5)
-            st.plotly_chart(fig_trend, use_container_width=True)
+        st.markdown("---")
+        
+        # Prepare regression data - monthly aggregation
+        regression_data = ml_data.groupby(ml_data['date'].dt.to_period('M')).agg({
+            'value_dl': 'sum',
+            'value_qt': 'sum'
+        }).reset_index()
+        regression_data['date'] = regression_data['date'].dt.to_timestamp()
+        regression_data = regression_data.sort_values('date')
+        
+        # Create features
+        regression_data['month'] = regression_data['date'].dt.month
+        regression_data['year'] = regression_data['date'].dt.year
+        regression_data['quarter'] = regression_data['date'].dt.quarter
+        regression_data['days_since_start'] = (regression_data['date'] - regression_data['date'].min()).dt.days
+        
+        # Lag features
+        regression_data['value_lag1'] = regression_data['value_dl'].shift(1)
+        regression_data['value_lag3'] = regression_data['value_dl'].shift(3)
+        regression_data['value_rolling_mean_3'] = regression_data['value_dl'].rolling(window=3, min_periods=1).mean()
+        
+        regression_data = regression_data.dropna()
+        
+        if len(regression_data) < 10:
+            st.warning("⚠️ Insufficient data for regression modeling (need at least 10 monthly records)")
+        else:
+            # Features and target
+            feature_cols = ['month', 'quarter', 'days_since_start', 'value_lag1', 'value_lag3', 'value_rolling_mean_3']
+            X = regression_data[feature_cols]
+            y = regression_data['value_dl']
             
-            # Trend statistics
-            col1, col2 = st.columns(2)
+            # Train-test split
+            test_size = st.slider("Test Set Size (%)", 10, 40, 20, 5, key="reg_test_size") / 100
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, shuffle=False)
             
-            with col1:
-                st.markdown("**Trend Statistics**")
-                peak_month = monthly_data.loc[monthly_data['Value'].idxmax(), 'Date']
-                peak_value = monthly_data['Value'].max()
-                st.write(f"- **Peak Month:** {peak_month.strftime('%B %Y')}")
-                st.write(f"- **Peak Value:** ${peak_value:,.2f}")
-                
-                avg_monthly = monthly_data['Value'].mean()
-                st.write(f"- **Average Monthly:** ${avg_monthly:,.2f}")
+            st.info(f"📊 Training on {len(X_train)} samples, Testing on {len(X_test)} samples")
             
-            with col2:
-                st.markdown("**Growth Analysis**")
-                if len(monthly_data) > 1:
-                    first_val = monthly_data.iloc[0]['Value']
-                    last_val = monthly_data.iloc[-1]['Value']
+            # Train models
+            st.markdown("#### 🤖 Model Comparison")
+            
+            models = {
+                'Linear Regression': LinearRegression(),
+                'Random Forest': RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42),
+                'XGBoost': xgb.XGBRegressor(n_estimators=100, max_depth=6, learning_rate=0.1, random_state=42)
+            }
+            
+            results = {}
+            predictions = {}
+            
+            with st.spinner("Training models..."):
+                for name, model in models.items():
+                    model.fit(X_train, y_train)
+                    y_pred = model.predict(X_test)
                     
-                    if first_val > 0:
-                        growth_pct = ((last_val - first_val) / first_val) * 100
-                        st.write(f"- **Overall Growth:** {growth_pct:+.1f}%")
-                    
-                    volatility = monthly_data['Value'].std() / monthly_data['Value'].mean() * 100
-                    st.write(f"- **Volatility (CV):** {volatility:.1f}%")
-        
-        # Yearly comparison
-        st.markdown("#### Year-by-Year Comparison")
-        yearly_data = filtered_data.groupby('year')['value_dl'].sum().reset_index()
-        yearly_data.columns = ['Year', 'Value']
-        
-        if len(yearly_data) > 0:
-            fig_yearly = px.bar(
-                yearly_data,
-                x='Year',
-                y='Value',
-                title='Yearly Import Values',
-                text_auto='.2s',
-                color='Value',
-                color_continuous_scale='Blues'
-            )
-            st.plotly_chart(fig_yearly, use_container_width=True)
-    
-    # ===== TAB 2: CONTRIBUTION & SHARE =====
-    with analysis_tabs[1]:
-        st.markdown("### 🎯 Contribution Analysis")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### Contribution to Country's Total Imports")
+                    results[name] = {
+                        'R² Score': r2_score(y_test, y_pred),
+                        'MAE': mean_absolute_error(y_test, y_pred),
+                        'RMSE': np.sqrt(mean_squared_error(y_test, y_pred))
+                    }
+                    predictions[name] = y_pred
             
-            # Calculate country total
-            country_total = df[df['country_name'] == selected_country]['value_dl'].sum()
-            commodity_value = filtered_data['value_dl'].sum()
-            contribution_pct = (commodity_value / country_total) * 100
+            # Display results
+            results_df = pd.DataFrame(results).T
+            results_df = results_df.round(4)
+            st.dataframe(results_df, use_container_width=True)
             
-            st.metric(
-                "Percentage of Total",
-                f"{contribution_pct:.2f}%",
-                help=f"This commodity represents {contribution_pct:.2f}% of all imports from {selected_country}"
-            )
+            # Best model
+            best_model = results_df['R² Score'].idxmax()
+            st.success(f"🏆 **Best Model:** {best_model} (R² = {results_df.loc[best_model, 'R² Score']:.4f})")
             
-            # Create gauge chart
-            fig_gauge = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=contribution_pct,
-                title={'text': f"% of {selected_country}'s Total Imports"},
-                gauge={
-                    'axis': {'range': [0, 100]},
-                    'bar': {'color': "#1E88E5"},
-                    'steps': [
-                        {'range': [0, 25], 'color': "lightgray"},
-                        {'range': [25, 50], 'color': "gray"},
-                        {'range': [50, 75], 'color': "darkgray"},
-                        {'range': [75, 100], 'color': "dimgray"}
-                    ]
-                }
+            st.markdown("""
+            <div class="insight-box">
+            <h4>📊 Metrics Explained:</h4>
+            <ul>
+                <li><b>R² Score:</b> 0-1, higher is better (1 = perfect predictions)</li>
+                <li><b>MAE:</b> Mean Absolute Error (average prediction error in USD)</li>
+                <li><b>RMSE:</b> Root Mean Squared Error (penalizes large errors more)</li>
+            </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Visualizations
+            st.markdown("---")
+            st.markdown("#### 📈 Actual vs Predicted Values")
+            
+            # Plot for best model
+            fig_reg = go.Figure()
+            
+            # Actual values
+            fig_reg.add_trace(go.Scatter(
+                x=list(range(len(y_test))),
+                y=y_test.values,
+                mode='lines+markers',
+                name='Actual',
+                line=dict(color='#1E88E5', width=2)
             ))
-            st.plotly_chart(fig_gauge, use_container_width=True)
-        
-        with col2:
-            st.markdown("#### Ranking Within Country")
             
-            # Get commodity rankings for this country
-            country_commodities = df[df['country_name'] == selected_country].groupby('commodity')['value_dl'].sum().sort_values(ascending=False).reset_index()
-            country_commodities['rank'] = range(1, len(country_commodities) + 1)
+            # Predicted values
+            fig_reg.add_trace(go.Scatter(
+                x=list(range(len(predictions[best_model]))),
+                y=predictions[best_model],
+                mode='lines+markers',
+                name=f'Predicted ({best_model})',
+                line=dict(color='#FF6B6B', width=2, dash='dash')
+            ))
             
-            commodity_rank = country_commodities[country_commodities['commodity'] == selected_commodity]['rank'].iloc[0] if len(country_commodities[country_commodities['commodity'] == selected_commodity]) > 0 else None
-            total_commodities = len(country_commodities)
-            
-            if commodity_rank:
-                st.metric(
-                    "Commodity Rank",
-                    f"#{commodity_rank} of {total_commodities}",
-                    help=f"This commodity ranks #{commodity_rank} among all commodities imported by {selected_country}"
-                )
-                
-                # Show top commodities for context
-                total_country_commodities = len(country_commodities)
-                st.info(f"📊 Total commodities for this country: **{total_country_commodities}**")
-                top_n_ranking = st.slider("Number of top commodities to show:", min_value=5, max_value=total_country_commodities, value=min(10, total_country_commodities), step=5, key="ranking_slider")
-                st.markdown(f"**Top {top_n_ranking} Commodities for This Country:**")
-                top_n = country_commodities.head(top_n_ranking)
-                
-                # Highlight selected commodity
-                def highlight_selected(row):
-                    if row['commodity'] == selected_commodity:
-                        return ['background-color: #e3f2fd'] * len(row)
-                    return [''] * len(row)
-                
-                st.dataframe(
-                    top_n[['rank', 'commodity', 'value_dl']].style.apply(highlight_selected, axis=1),
-                    use_container_width=True,
-                    height=min(400, max(200, top_n_ranking * 40))
-                )
-        
-        # Share over time
-        st.markdown("#### Share Evolution Over Time")
-        
-        # Calculate monthly share - need to align the data properly
-        monthly_country = df[df['country_name'] == selected_country].resample('M', on='date')['value_dl'].sum()
-        monthly_commodity = filtered_data.resample('M', on='date')['value_dl'].sum()
-        
-        # Merge on index to ensure same dates
-        share_data = pd.merge(
-            monthly_commodity.to_frame('commodity_value'),
-            monthly_country.to_frame('country_value'),
-            left_index=True,
-            right_index=True,
-            how='inner'
-        )
-        
-        if not share_data.empty:
-            share_data['Share %'] = (share_data['commodity_value'] / share_data['country_value'] * 100)
-            share_data = share_data.reset_index()
-            share_data.columns = ['Date', 'commodity_value', 'country_value', 'Share %']
-            
-            fig_share = px.line(
-                share_data,
-                x='Date',
-                y='Share %',
-                title=f'Monthly Share of {selected_commodity} in {selected_country} Imports',
-                labels={'Share %': 'Share of Total Imports (%)'}
+            fig_reg.update_layout(
+                title=f'Actual vs Predicted Import Values - {best_model}',
+                xaxis_title='Test Sample Index',
+                yaxis_title='Import Value (USD)',
+                hovermode='x unified'
             )
-            fig_share.update_traces(line_color='#43A047', line_width=2)
-            st.plotly_chart(fig_share, use_container_width=True)
-        else:
-            st.info("No overlapping data for share calculation.")
+            
+            st.plotly_chart(fig_reg, use_container_width=True)
+            
+            # Feature Importance (for tree-based models)
+            if best_model in ['Random Forest', 'XGBoost']:
+                st.markdown("---")
+                st.markdown("#### 🎯 Feature Importance")
+                
+                model = models[best_model]
+                importances = model.feature_importances_
+                feature_importance_df = pd.DataFrame({
+                    'Feature': feature_cols,
+                    'Importance': importances
+                }).sort_values('Importance', ascending=False)
+                
+                fig_imp = px.bar(
+                    feature_importance_df,
+                    x='Importance',
+                    y='Feature',
+                    orientation='h',
+                    title='Feature Importance Ranking',
+                    color='Importance',
+                    color_continuous_scale='Blues'
+                )
+                st.plotly_chart(fig_imp, use_container_width=True)
+                
+                st.markdown("""
+                <div class="insight-box">
+                <p><b>Interpretation:</b> Higher importance = feature contributes more to predictions. 
+                Lag features (past values) typically have high importance in time series.</p>
+                </div>
+                """, unsafe_allow_html=True)
     
-    # ===== TAB 3: TEMPORAL PATTERNS =====
-    with analysis_tabs[2]:
-        st.markdown("### ⏰ Temporal Patterns & Seasonality")
+    # ========================================================================
+    # TAB 2: CLASSIFICATION MODELS
+    # ========================================================================
+    with ml_tabs[1]:
+        st.markdown("### 🎯 Classification: Categorize Import Patterns")
         
-        col1, col2 = st.columns(2)
+        st.markdown("""
+        <div class="insight-box">
+        <h4>🎓 What is Classification?</h4>
+        <p>Classification models predict <b>categories or classes</b>. Here, we classify transactions into value categories and detect patterns.</p>
+        <p><b>Use Cases:</b> Risk assessment, pattern recognition, anomaly detection</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        with col1:
-            st.markdown("#### Monthly Seasonality")
-            
-            monthly_pattern = filtered_data.groupby('month_name')['value_dl'].mean().reindex(
-                ['January', 'February', 'March', 'April', 'May', 'June', 
-                 'July', 'August', 'September', 'October', 'November', 'December']
-            ).reset_index()
-            monthly_pattern.columns = ['Month', 'Avg Value']
-            
-            fig_seasonal = px.bar(
-                monthly_pattern,
-                x='Month',
-                y='Avg Value',
-                title='Average Import Value by Month',
-                labels={'Avg Value': 'Average Value (USD)'},
-                color='Avg Value',
-                color_continuous_scale='Teal'
-            )
-            st.plotly_chart(fig_seasonal, use_container_width=True)
+        st.markdown("---")
         
-        with col2:
-            st.markdown("#### Quarterly Patterns")
-            
-            quarterly_pattern = filtered_data.groupby('quarter')['value_dl'].mean().reset_index()
-            quarterly_pattern.columns = ['Quarter', 'Avg Value']
-            quarterly_pattern['Quarter'] = 'Q' + quarterly_pattern['Quarter'].astype(str)
-            
-            fig_quarterly = px.bar(
-                quarterly_pattern,
-                x='Quarter',
-                y='Avg Value',
-                title='Average Import Value by Quarter',
-                labels={'Avg Value': 'Average Value (USD)'},
-                color='Avg Value',
-                color_continuous_scale='Purp'
-            )
-            st.plotly_chart(fig_quarterly, use_container_width=True)
+        # Create classification target - categorize transaction values
+        classification_data = ml_data.copy()
         
-        # Day of week analysis (if enough data)
-        st.markdown("#### Transaction Frequency by Day of Week")
-        filtered_data['day_of_week'] = filtered_data['date'].dt.day_name()
-        dow_pattern = filtered_data.groupby('day_of_week').size().reindex(
-            ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        ).reset_index()
-        dow_pattern.columns = ['Day', 'Count']
+        # Define value categories based on quartiles
+        quartiles = classification_data['value_dl'].quantile([0.33, 0.67])
         
-        fig_dow = px.bar(
-            dow_pattern,
-            x='Day',
-            y='Count',
-            title='Transaction Count by Day of Week',
-            labels={'Count': 'Number of Transactions'}
-        )
-        st.plotly_chart(fig_dow, use_container_width=True)
-    
-    # ===== TAB 4: VALUE INSIGHTS =====
-    with analysis_tabs[3]:
-        st.markdown("### 💰 Value & Pricing Analysis")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### Value Distribution")
-            
-            fig_hist_value = px.histogram(
-                filtered_data,
-                x='value_dl',
-                nbins=30,
-                title='Distribution of Transaction Values',
-                labels={'value_dl': 'Value (USD)'}
-            )
-            st.plotly_chart(fig_hist_value, use_container_width=True)
-            
-            # Value statistics
-            st.markdown("**Value Statistics:**")
-            st.write(f"- **Min:** ${filtered_data['value_dl'].min():,.2f}")
-            st.write(f"- **Max:** ${filtered_data['value_dl'].max():,.2f}")
-            st.write(f"- **Median:** ${filtered_data['value_dl'].median():,.2f}")
-            st.write(f"- **Std Dev:** ${filtered_data['value_dl'].std():,.2f}")
-        
-        with col2:
-            st.markdown("#### Quantity vs Value Relationship")
-            
-            # Filter valid data
-            valid_data = filtered_data[(filtered_data['value_qt'] > 0) & (filtered_data['value_dl'] > 0)].copy()
-            
-            if len(valid_data) > 0:
-                valid_data['unit_price'] = valid_data['value_dl'] / valid_data['value_qt']
-                
-                fig_scatter = px.scatter(
-                    valid_data.sample(min(1000, len(valid_data))),  # Sample for performance
-                    x='value_qt',
-                    y='value_dl',
-                    title='Quantity vs Value Relationship',
-                    labels={'value_qt': 'Quantity', 'value_dl': 'Value (USD)'}
-                )
-                st.plotly_chart(fig_scatter, use_container_width=True)
-                
-                st.markdown("**Unit Price Analysis:**")
-                st.write(f"- **Avg Unit Price:** ${valid_data['unit_price'].mean():,.2f}")
-                st.write(f"- **Median Unit Price:** ${valid_data['unit_price'].median():,.2f}")
+        def categorize_value(val):
+            if val <= quartiles[0.33]:
+                return 'Low Value'
+            elif val <= quartiles[0.67]:
+                return 'Medium Value'
             else:
-                st.info("Insufficient data for quantity-value analysis")
+                return 'High Value'
         
-        # Price trends over time
-        if len(valid_data) > 0:
-            st.markdown("#### Unit Price Trend")
-            
-            monthly_price = valid_data.resample('M', on='date').apply(
-                lambda x: (x['value_dl'].sum() / x['value_qt'].sum()) if x['value_qt'].sum() > 0 else np.nan
-            ).reset_index()
-            monthly_price.columns = ['Date', 'Avg Unit Price']
-            monthly_price = monthly_price.dropna()
-            
-            fig_price_trend = px.line(
-                monthly_price,
-                x='Date',
-                y='Avg Unit Price',
-                title='Average Unit Price Over Time',
-                labels={'Avg Unit Price': 'Price per Unit (USD)'}
-            )
-            st.plotly_chart(fig_price_trend, use_container_width=True)
-    
-    # ===== TAB 5: STATISTICAL SUMMARY =====
-    with analysis_tabs[4]:
-        st.markdown("### 📊 Comprehensive Statistical Summary")
+        classification_data['value_category'] = classification_data['value_dl'].apply(categorize_value)
         
-        col1, col2 = st.columns(2)
+        st.markdown("#### 📊 Classification Task: Predict Transaction Value Category")
+        st.write(f"- **Low Value:** ≤ ${quartiles[0.33]:,.2f}")
+        st.write(f"- **Medium Value:** ${quartiles[0.33]:,.2f} - ${quartiles[0.67]:,.2f}")
+        st.write(f"- **High Value:** > ${quartiles[0.67]:,.2f}")
         
-        with col1:
-            st.markdown("#### Descriptive Statistics")
-            
-            stats_df = filtered_data[['value_dl', 'value_qt']].describe().T
-            stats_df['column'] = stats_df.index
-            stats_df = stats_df.reset_index(drop=True)
-            st.dataframe(stats_df, use_container_width=True)
-            
-            st.markdown("#### Data Quality Metrics")
-            st.write(f"- **Missing Values (value_dl):** {filtered_data['value_dl'].isna().sum()}")
-            st.write(f"- **Missing Values (value_qt):** {filtered_data['value_qt'].isna().sum()}")
-            st.write(f"- **Zero Values (value_dl):** {(filtered_data['value_dl'] == 0).sum()}")
-            st.write(f"- **Zero Values (value_qt):** {(filtered_data['value_qt'] == 0).sum()}")
-        
-        with col2:
-            st.markdown("#### Time Range Analysis")
-            st.write(f"- **First Transaction:** {filtered_data['date'].min().strftime('%Y-%m-%d')}")
-            st.write(f"- **Last Transaction:** {filtered_data['date'].max().strftime('%Y-%m-%d')}")
-            st.write(f"- **Total Days:** {(filtered_data['date'].max() - filtered_data['date'].min()).days}")
-            st.write(f"- **Number of Years:** {len(filtered_data['year'].unique())}")
-            st.write(f"- **Number of Months:** {len(filtered_data.groupby(filtered_data['date'].dt.to_period('M')))}")
-            
-            st.markdown("#### Transaction Patterns")
-            st.write(f"- **Transactions per Year:** {len(filtered_data) / len(filtered_data['year'].unique()):.1f}")
-            st.write(f"- **Transactions per Month:** {len(filtered_data) / len(filtered_data.groupby(filtered_data['date'].dt.to_period('M'))):.1f}")
-        
-        # Detailed data view
-        st.markdown("#### Raw Data Sample")
-        sample_rows = st.number_input("Number of rows to display:", min_value=10, max_value=100, value=20, step=10, key="sample_rows")
-        st.dataframe(
-            filtered_data[['date', 'value_dl', 'value_qt', 'unit', 'year', 'month_name']].head(sample_rows),
-            use_container_width=True
+        # Show class distribution
+        class_dist = classification_data['value_category'].value_counts()
+        fig_dist = px.pie(
+            values=class_dist.values,
+            names=class_dist.index,
+            title='Class Distribution',
+            color_discrete_sequence=['#1E88E5', '#FF6B6B', '#4CAF50']
         )
-    
-    # ===== TAB 6: FORECASTING =====
-    with analysis_tabs[5]:
-        st.markdown("### 🔮 Forecast Future Imports")
+        st.plotly_chart(fig_dist, use_container_width=True)
         
-        if not PROPHET_AVAILABLE:
-            st.error("❌ Prophet library is not installed. Forecasting features are unavailable.")
-            st.info("To enable forecasting, install Prophet: `pip install prophet`")
+        # Prepare features
+        classification_data['month'] = classification_data['date'].dt.month
+        classification_data['quarter'] = classification_data['date'].dt.quarter
+        classification_data['year'] = classification_data['date'].dt.year
+        classification_data['day_of_week'] = classification_data['date'].dt.dayofweek
+        
+        # Encode country and commodity if needed
+        if selected_country_ml == 'All Countries':
+            le_country = LabelEncoder()
+            classification_data['country_encoded'] = le_country.fit_transform(classification_data['country_name'])
         else:
-            st.info("📊 Using Prophet time series forecasting model to predict future import values")
-            
-            forecast_months = st.slider("Forecast Horizon (months)", min_value=3, max_value=24, value=12, step=3)
-            
-            # Prepare data for Prophet
-            prophet_data = filtered_data.resample('M', on='date')['value_dl'].sum().reset_index()
-            prophet_data.columns = ['ds', 'y']
-            
-            if len(prophet_data) >= 3:
-                try:
-                    with st.spinner("Training forecast model..."):
-                        # Train Prophet model
-                        model = Prophet(
-                            yearly_seasonality=True,
-                            weekly_seasonality=False,
-                            daily_seasonality=False
-                        )
-                        model.fit(prophet_data)
-                        
-                        # Make future predictions
-                        future = model.make_future_dataframe(periods=forecast_months, freq='M')
-                        forecast = model.predict(future)
-                    
-                    # Plot forecast
-                    fig_forecast = go.Figure()
-                    
-                    # Historical data
-                    fig_forecast.add_trace(go.Scatter(
-                        x=prophet_data['ds'],
-                        y=prophet_data['y'],
-                        mode='lines+markers',
-                        name='Historical',
-                        line=dict(color='#1E88E5', width=2)
-                    ))
-                    
-                    # Forecast
-                    fig_forecast.add_trace(go.Scatter(
-                        x=forecast['ds'],
-                        y=forecast['yhat'],
-                        mode='lines',
-                        name='Forecast',
-                        line=dict(color='#E53935', width=2, dash='dash')
-                    ))
-                    
-                    # Confidence interval
-                    fig_forecast.add_trace(go.Scatter(
-                        x=forecast['ds'],
-                        y=forecast['yhat_upper'],
-                        fill=None,
-                        mode='lines',
-                        line_color='rgba(229, 57, 53, 0.2)',
-                        showlegend=False,
-                        name='Upper Bound'
-                    ))
-                    
-                    fig_forecast.add_trace(go.Scatter(
-                        x=forecast['ds'],
-                        y=forecast['yhat_lower'],
-                        fill='tonexty',
-                        mode='lines',
-                        line_color='rgba(229, 57, 53, 0.2)',
-                        name='Confidence Interval'
-                    ))
-                    
-                    fig_forecast.update_layout(
-                        title=f'{forecast_months}-Month Forecast: {selected_commodity} from {selected_country}',
-                        xaxis_title='Date',
-                        yaxis_title='Import Value (USD)',
-                        hovermode='x unified'
-                    )
-                    
-                    st.plotly_chart(fig_forecast, use_container_width=True)
-                    
-                    # Forecast statistics
-                    st.markdown("#### Forecast Statistics")
-                    
-                    future_forecast = forecast[forecast['ds'] > prophet_data['ds'].max()]
-                    
-                    col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
-                        avg_forecast = future_forecast['yhat'].mean()
-                        st.metric("Avg Forecast Value", f"${avg_forecast:,.0f}")
-                    
-                    with col2:
-                        total_forecast = future_forecast['yhat'].sum()
-                        st.metric(f"Total {forecast_months}-Month", f"${total_forecast/1e6:.2f}M")
-                    
-                    with col3:
-                        historical_avg = prophet_data['y'].mean()
-                        growth = ((avg_forecast - historical_avg) / historical_avg * 100) if historical_avg > 0 else 0
-                        st.metric("Expected Growth", f"{growth:+.1f}%")
-                    
-                    # Show forecast table
-                    with st.expander("📋 View Detailed Forecast"):
-                        forecast_display = future_forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
-                        forecast_display.columns = ['Date', 'Forecast', 'Lower Bound', 'Upper Bound']
-                        forecast_display['Date'] = forecast_display['Date'].dt.strftime('%Y-%m')
-                        st.dataframe(forecast_display, use_container_width=True)
-                    
-                except Exception as e:
-                    st.error(f"❌ Forecasting failed: {str(e)}")
-                    st.info("This could be due to insufficient data or irregular patterns. Try a different commodity or country combination.")
-            else:
-                st.warning("⚠️ Insufficient data for forecasting. Need at least 3 months of data.")
-    
-    # === DOWNLOAD SECTION ===
-    st.markdown("---")
-    st.markdown("## 💾 Download Analysis Data")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        csv_data = filtered_data.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Download Selected Data (CSV)",
-            data=csv_data,
-            file_name=f"{selected_country}_{selected_commodity}_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv"
-        )
-    
-    with col2:
-        # Create summary report
-        summary_report = pd.DataFrame({
-            'Metric': [
-                'Country', 'Commodity', 'Total Transactions', 'Total Value (USD)',
-                'Average Value (USD)', 'Date Range', 'Peak Month', 'Peak Value'
-            ],
-            'Value': [
-                selected_country, selected_commodity, len(filtered_data),
-                f"${filtered_data['value_dl'].sum():,.2f}",
-                f"${filtered_data['value_dl'].mean():,.2f}",
-                f"{filtered_data['date'].min()} to {filtered_data['date'].max()}",
-                monthly_data.loc[monthly_data['Value'].idxmax(), 'Date'].strftime('%B %Y') if len(monthly_data) > 0 else 'N/A',
-                f"${monthly_data['Value'].max():,.2f}" if len(monthly_data) > 0 else 'N/A'
-            ]
-        })
+            classification_data['country_encoded'] = 0
         
-        csv_summary = summary_report.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Download Summary Report (CSV)",
-            data=csv_summary,
-            file_name=f"summary_{selected_country}_{selected_commodity}_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv"
+        if selected_commodity_ml == 'All Commodities':
+            le_commodity = LabelEncoder()
+            classification_data['commodity_encoded'] = le_commodity.fit_transform(classification_data['commodity'])
+        else:
+            classification_data['commodity_encoded'] = 0
+        
+        feature_cols_class = ['month', 'quarter', 'year', 'day_of_week', 'country_encoded', 'commodity_encoded', 'value_qt']
+        classification_data = classification_data.dropna(subset=feature_cols_class + ['value_category'])
+        
+        if len(classification_data) < 50:
+            st.warning("⚠️ Insufficient data for classification (need at least 50 samples)")
+        else:
+            X_class = classification_data[feature_cols_class]
+            y_class = classification_data['value_category']
+            
+            # Train-test split
+            test_size_class = st.slider("Test Set Size (%)", 10, 40, 20, 5, key="class_test_size") / 100
+            X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(
+                X_class, y_class, test_size=test_size_class, random_state=42, stratify=y_class
+            )
+            
+            st.info(f"📊 Training on {len(X_train_c)} samples, Testing on {len(X_test_c)} samples")
+            
+            # Train classification models
+            st.markdown("---")
+            st.markdown("#### 🤖 Model Comparison")
+            
+            clf_models = {
+                'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42),
+                'Random Forest': RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42),
+                'XGBoost': xgb.XGBClassifier(n_estimators=100, max_depth=6, learning_rate=0.1, random_state=42)
+            }
+            
+            clf_results = {}
+            clf_predictions = {}
+            
+            with st.spinner("Training classification models..."):
+                for name, model in clf_models.items():
+                    model.fit(X_train_c, y_train_c)
+                    y_pred_c = model.predict(X_test_c)
+                    
+                    clf_results[name] = {
+                        'Accuracy': accuracy_score(y_test_c, y_pred_c),
+                        'Precision': precision_score(y_test_c, y_pred_c, average='weighted'),
+                        'Recall': recall_score(y_test_c, y_pred_c, average='weighted'),
+                        'F1 Score': f1_score(y_test_c, y_pred_c, average='weighted')
+                    }
+                    clf_predictions[name] = y_pred_c
+            
+            # Display results
+            clf_results_df = pd.DataFrame(clf_results).T
+            clf_results_df = clf_results_df.round(4)
+            st.dataframe(clf_results_df, use_container_width=True)
+            
+            # Best classifier
+            best_clf = clf_results_df['Accuracy'].idxmax()
+            st.success(f"🏆 **Best Model:** {best_clf} (Accuracy = {clf_results_df.loc[best_clf, 'Accuracy']:.4f})")
+            
+            st.markdown("""
+            <div class="insight-box">
+            <h4>📊 Metrics Explained:</h4>
+            <ul>
+                <li><b>Accuracy:</b> % of correct predictions</li>
+                <li><b>Precision:</b> Of predicted positives, how many are actually positive?</li>
+                <li><b>Recall:</b> Of actual positives, how many did we find?</li>
+                <li><b>F1 Score:</b> Harmonic mean of precision and recall</li>
+            </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Confusion Matrix
+            st.markdown("---")
+            st.markdown("#### 📊 Confusion Matrix")
+            
+            cm = confusion_matrix(y_test_c, clf_predictions[best_clf])
+            labels = sorted(y_class.unique())
+            
+            fig_cm = px.imshow(
+                cm,
+                labels=dict(x="Predicted", y="Actual", color="Count"),
+                x=labels,
+                y=labels,
+                text_auto=True,
+                color_continuous_scale='Blues',
+                title=f'Confusion Matrix - {best_clf}'
+            )
+            st.plotly_chart(fig_cm, use_container_width=True)
+            
+            st.markdown("""
+            <div class="insight-box">
+            <p><b>Interpretation:</b> Diagonal cells = correct predictions. Off-diagonal = misclassifications. 
+            Perfect model would have all values on diagonal.</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # ========================================================================
+    # TAB 3: CLUSTERING MODELS
+    # ========================================================================
+    with ml_tabs[2]:
+        st.markdown("### 🔍 Clustering: Discover Hidden Patterns")
+        
+        st.markdown("""
+        <div class="insight-box">
+        <h4>🎓 What is Clustering?</h4>
+        <p>Clustering is <b>unsupervised learning</b> that groups similar data points together without predefined labels.</p>
+        <p><b>Use Cases:</b> Market segmentation, pattern discovery, anomaly detection</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Choose clustering level
+        cluster_type = st.radio(
+            "Choose what to cluster:",
+            ["Commodities", "Countries", "Time Periods"],
+            horizontal=True
         )
-
+        
+        if cluster_type == "Commodities":
+            st.markdown("#### 📦 Commodity Clustering")
+            st.write("Group commodities with similar import patterns")
+            
+            # Aggregate by commodity
+            cluster_data = ml_data.groupby('commodity').agg({
+                'value_dl': ['sum', 'mean', 'std'],
+                'value_qt': 'sum',
+                'date': 'count'
+            }).reset_index()
+            cluster_data.columns = ['commodity', 'total_value', 'avg_value', 'std_value', 'total_qty', 'num_transactions']
+            cluster_data['std_value'] = cluster_data['std_value'].fillna(0)
+            
+            # Add time-based features
+            commodity_monthly = ml_data.groupby(['commodity', ml_data['date'].dt.to_period('M')])['value_dl'].sum().reset_index()
+            volatility = commodity_monthly.groupby('commodity')['value_dl'].std().reset_index()
+            volatility.columns = ['commodity', 'volatility']
+            cluster_data = cluster_data.merge(volatility, on='commodity', how='left')
+            cluster_data['volatility'] = cluster_data['volatility'].fillna(0)
+            
+        elif cluster_type == "Countries":
+            st.markdown("#### 🌍 Country Clustering")
+            st.write("Group countries with similar trade patterns")
+            
+            # Aggregate by country
+            cluster_data = ml_data.groupby('country_name').agg({
+                'value_dl': ['sum', 'mean', 'std'],
+                'commodity': 'nunique',
+                'date': 'count'
+            }).reset_index()
+            cluster_data.columns = ['country', 'total_value', 'avg_value', 'std_value', 'commodity_diversity', 'num_transactions']
+            cluster_data['std_value'] = cluster_data['std_value'].fillna(0)
+            
+            # Add growth rate
+            country_yearly = ml_data.groupby(['country_name', 'year'])['value_dl'].sum().reset_index()
+            growth_rates = []
+            for country in cluster_data['country'].unique():
+                country_years = country_yearly[country_yearly['country_name'] == country].sort_values('year')
+                if len(country_years) > 1:
+                    growth = (country_years['value_dl'].iloc[-1] - country_years['value_dl'].iloc[0]) / country_years['value_dl'].iloc[0]
+                else:
+                    growth = 0
+                growth_rates.append({'country': country, 'growth_rate': growth})
+            
+            growth_df = pd.DataFrame(growth_rates)
+            cluster_data = cluster_data.merge(growth_df, on='country', how='left')
+            cluster_data['growth_rate'] = cluster_data['growth_rate'].fillna(0)
+            
+        else:  # Time Periods
+            st.markdown("#### ⏰ Time Period Clustering")
+            st.write("Group similar months/quarters based on trade patterns")
+            
+            # Aggregate by month
+            cluster_data = ml_data.groupby(ml_data['date'].dt.to_period('M')).agg({
+                'value_dl': ['sum', 'mean'],
+                'commodity': 'nunique',
+                'country_name': 'nunique',
+                'date': 'count'
+            }).reset_index()
+            cluster_data.columns = ['period', 'total_value', 'avg_value', 'num_commodities', 'num_countries', 'num_transactions']
+            cluster_data['period'] = cluster_data['period'].dt.to_timestamp()
+            cluster_data['month'] = cluster_data['period'].dt.month
+            cluster_data['year'] = cluster_data['period'].dt.year
+        
+        if len(cluster_data) < 3:
+            st.warning("⚠️ Insufficient data for clustering (need at least 3 items)")
+        else:
+            # Select features for clustering
+            if cluster_type == "Commodities":
+                feature_cols_cluster = ['total_value', 'avg_value', 'std_value', 'total_qty', 'num_transactions', 'volatility']
+                id_col = 'commodity'
+            elif cluster_type == "Countries":
+                feature_cols_cluster = ['total_value', 'avg_value', 'std_value', 'commodity_diversity', 'num_transactions', 'growth_rate']
+                id_col = 'country'
+            else:
+                feature_cols_cluster = ['total_value', 'avg_value', 'num_commodities', 'num_countries', 'num_transactions']
+                id_col = 'period'
+            
+            X_cluster = cluster_data[feature_cols_cluster].fillna(0)
+            
+            # Standardize features
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X_cluster)
+            
+            # Determine optimal number of clusters with elbow method
+            st.markdown("---")
+            st.markdown("#### 📊 Elbow Method - Finding Optimal Clusters")
+            
+            max_clusters = min(10, len(cluster_data) - 1)
+            inertias = []
+            silhouette_scores = []
+            K_range = range(2, max_clusters + 1)
+            
+            with st.spinner("Computing optimal clusters..."):
+                for k in K_range:
+                    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+                    kmeans.fit(X_scaled)
+                    inertias.append(kmeans.inertia_)
+                    silhouette_scores.append(silhouette_score(X_scaled, kmeans.labels_))
+            
+            # Plot elbow curve
+            fig_elbow = go.Figure()
+            fig_elbow.add_trace(go.Scatter(
+                x=list(K_range),
+                y=inertias,
+                mode='lines+markers',
+                name='Inertia',
+                line=dict(color='#1E88E5', width=2)
+            ))
+            fig_elbow.update_layout(
+                title='Elbow Method for Optimal K',
+                xaxis_title='Number of Clusters (K)',
+                yaxis_title='Inertia (Within-cluster sum of squares)',
+                hovermode='x unified'
+            )
+            st.plotly_chart(fig_elbow, use_container_width=True)
+            
+            # Plot silhouette scores
+            fig_silhouette = go.Figure()
+            fig_silhouette.add_trace(go.Scatter(
+                x=list(K_range),
+                y=silhouette_scores,
+                mode='lines+markers',
+                name='Silhouette Score',
+                line=dict(color='#4CAF50', width=2),
+                fill='tozeroy'
+            ))
+            fig_silhouette.update_layout(
+                title='Silhouette Score by Number of Clusters',
+                xaxis_title='Number of Clusters (K)',
+                yaxis_title='Silhouette Score (higher is better)',
+                hovermode='x unified'
+            )
+            st.plotly_chart(fig_silhouette, use_container_width=True)
+            
+            # User selects number of clusters
+            optimal_k = silhouette_scores.index(max(silhouette_scores)) + 2
+            st.success(f"💡 Recommended: **{optimal_k} clusters** (highest silhouette score: {max(silhouette_scores):.3f})")
+            
+            n_clusters = st.slider("Select Number of Clusters:", 2, max_clusters, optimal_k, 1, key="n_clusters")
+            
+            # Perform K-Means clustering
+            kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+            cluster_labels = kmeans.fit_predict(X_scaled)
+            
+            cluster_data['Cluster'] = cluster_labels
+            cluster_data['Cluster'] = cluster_data['Cluster'].apply(lambda x: f'Cluster {x+1}')
+            
+            # PCA for visualization
+            st.markdown("---")
+            st.markdown("#### 🎨 Cluster Visualization (PCA 2D Projection)")
+            
+            pca = PCA(n_components=2)
+            X_pca = pca.fit_transform(X_scaled)
+            
+            cluster_data['PCA1'] = X_pca[:, 0]
+            cluster_data['PCA2'] = X_pca[:, 1]
+            
+            fig_clusters = px.scatter(
+                cluster_data,
+                x='PCA1',
+                y='PCA2',
+                color='Cluster',
+                hover_data=[id_col],
+                title=f'{cluster_type} Clustering Visualization',
+                color_discrete_sequence=px.colors.qualitative.Set2
+            )
+            st.plotly_chart(fig_clusters, use_container_width=True)
+            
+            st.markdown(f"""
+            <div class="insight-box">
+            <p><b>PCA Explained:</b> Principal Component Analysis reduces multi-dimensional data to 2D for visualization. 
+            Variance explained: PC1={pca.explained_variance_ratio_[0]*100:.1f}%, PC2={pca.explained_variance_ratio_[1]*100:.1f}%</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Cluster Summary
+            st.markdown("---")
+            st.markdown("#### 📋 Cluster Summary Statistics")
+            
+            cluster_summary = cluster_data.groupby('Cluster')[feature_cols_cluster].mean().round(2)
+            cluster_summary['Count'] = cluster_data.groupby('Cluster').size()
+            st.dataframe(cluster_summary, use_container_width=True)
+            
+            # Show items in each cluster
+            st.markdown("#### 🔍 Cluster Members")
+            selected_cluster = st.selectbox("Select cluster to view members:", cluster_data['Cluster'].unique())
+            
+            cluster_members = cluster_data[cluster_data['Cluster'] == selected_cluster][
+                [id_col] + feature_cols_cluster
+            ].sort_values('total_value', ascending=False)
+            
+            st.dataframe(cluster_members, use_container_width=True)
+            
+            st.markdown("""
+            <div class="insight-box">
+            <h4>💡 Clustering Insights:</h4>
+            <p><b>Silhouette Score:</b> Measures how well-defined clusters are (-1 to 1, higher is better)</p>
+            <p><b>Business Value:</b> Use clusters to identify similar trading partners, optimize strategies per segment, and detect outliers</p>
+            </div>
+            """, unsafe_allow_html=True)
 
 # ======================================================================
 # FOOTER
