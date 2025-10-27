@@ -340,13 +340,9 @@ elif page == "🔍 EDA Explorer":
             monthly_agg,
             x='Date',
             y='Total Import Value (USD)',
-            title='Total Monthly Import Value Over Time',
+            title='Total Monthly Import Value Over Time (2020 COVID-19 impact visible)',
             labels={'Total Import Value (USD)': 'Value (USD)'}
         )
-        # Add COVID-19 marker if data spans 2020
-        if monthly_agg['Date'].min().year <= 2020 <= monthly_agg['Date'].max().year:
-            fig_monthly.add_vline(x='2020-03-01', line_dash="dash", line_color="red",
-                                 annotation_text="COVID-19", annotation_position="top")
         st.plotly_chart(fig_monthly, use_container_width=True)
         
         st.info("📊 **Insight**: Notice the sharp decline in 2020-2021 (COVID-19 impact) followed by strong recovery in 2022.")
@@ -977,8 +973,7 @@ elif page == "🎯 Interactive Models":
                     x='value_qt',
                     y='value_dl',
                     title='Quantity vs Value Relationship',
-                    labels={'value_qt': 'Quantity', 'value_dl': 'Value (USD)'},
-                    trendline='ols'
+                    labels={'value_qt': 'Quantity', 'value_dl': 'Value (USD)'}
                 )
                 st.plotly_chart(fig_scatter, use_container_width=True)
                 
