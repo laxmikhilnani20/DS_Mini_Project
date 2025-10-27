@@ -121,6 +121,17 @@ if page == "📊 Data Overview":
     st.markdown('<p class="main-header">📊 Data Overview Dashboard</p>', unsafe_allow_html=True)
     st.markdown("### Complete Dataset Analysis & Export")
     
+    # Smart formatting function for currency
+    def format_currency(value):
+        if value >= 1e9:
+            return f"${value/1e9:.2f}B"
+        elif value >= 1e6:
+            return f"${value/1e6:.2f}M"
+        elif value >= 1e3:
+            return f"${value/1e3:.2f}K"
+        else:
+            return f"${value:.2f}"
+    
     # === KEY METRICS ===
     st.markdown("## 📈 Key Statistics")
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -133,7 +144,7 @@ if page == "📊 Data Overview":
         st.metric("Commodities", f"{df['commodity'].nunique():,}")
     with col4:
         total_value = df['value_dl'].sum()
-        st.metric("Total Value", f"${total_value/1e9:.2f}B")
+        st.metric("Total Value", format_currency(total_value))
     with col5:
         date_range = (df['date'].max() - df['date'].min()).days / 365.25
         st.metric("Years Span", f"{date_range:.1f}")
@@ -296,7 +307,7 @@ if page == "📊 Data Overview":
     with insight_col1:
         top_country = df.groupby('country_name')['value_dl'].sum().idxmax()
         top_country_value = df.groupby('country_name')['value_dl'].sum().max()
-        st.success(f"**Top Importing Country:** {top_country} (${top_country_value/1e9:.2f}B)")
+        st.success(f"**Top Importing Country:** {top_country} ({format_currency(top_country_value)})")
         
         top_commodity = df.groupby('commodity')['value_dl'].sum().idxmax()
         st.success(f"**Top Commodity:** {top_commodity}")
@@ -307,7 +318,7 @@ if page == "📊 Data Overview":
         st.info(f"**Most Diverse Imports:** {most_diverse} ({diversity_count:,} commodities)")
         
         avg_transaction = df['value_dl'].mean()
-        st.info(f"**Average Transaction Value:** ${avg_transaction:,.2f}")
+        st.info(f"**Average Transaction Value:** {format_currency(avg_transaction)}")
 
 
 # ======================================================================
