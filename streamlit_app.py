@@ -397,8 +397,10 @@ elif page == "🔍 EDA Explorer":
         st.markdown("### 🌍 Geographic Distribution")
         
         # Top countries
-        st.markdown("#### Top 15 Countries by Import Value")
-        country_totals = df.groupby('country_name')['value_dl'].sum().sort_values(ascending=False).head(15).reset_index()
+        st.markdown("#### Top Countries by Import Value")
+        top_n_countries = st.slider("Select number of countries to display:", min_value=5, max_value=50, value=15, step=5, key="top_countries_slider")
+        
+        country_totals = df.groupby('country_name')['value_dl'].sum().sort_values(ascending=False).head(top_n_countries).reset_index()
         country_totals.columns = ['Country', 'Total Value (USD)']
         
         fig_countries = px.bar(
@@ -406,7 +408,7 @@ elif page == "🔍 EDA Explorer":
             y='Country',
             x='Total Value (USD)',
             orientation='h',
-            title='Top 15 Importing Countries',
+            title=f'Top {top_n_countries} Importing Countries',
             text_auto='.2s'
         )
         st.plotly_chart(fig_countries, use_container_width=True)
@@ -446,8 +448,10 @@ elif page == "🔍 EDA Explorer":
         st.markdown("### 📦 Commodity Analysis")
         
         # Top commodities
-        st.markdown("#### Top 20 Commodities by Value")
-        commodity_totals = df.groupby('commodity')['value_dl'].sum().sort_values(ascending=False).head(20).reset_index()
+        st.markdown("#### Top Commodities by Value")
+        top_n_commodities = st.slider("Select number of commodities to display:", min_value=5, max_value=50, value=20, step=5, key="top_commodities_slider")
+        
+        commodity_totals = df.groupby('commodity')['value_dl'].sum().sort_values(ascending=False).head(top_n_commodities).reset_index()
         commodity_totals.columns = ['Commodity', 'Total Value (USD)']
         
         fig_commodities = px.bar(
@@ -455,22 +459,24 @@ elif page == "🔍 EDA Explorer":
             y='Commodity',
             x='Total Value (USD)',
             orientation='h',
-            title='Top 20 Commodities',
+            title=f'Top {top_n_commodities} Commodities',
             text_auto='.2s',
-            height=600
+            height=max(400, top_n_commodities * 25)  # Dynamic height based on number of items
         )
         st.plotly_chart(fig_commodities, use_container_width=True)
         
         # Commodity diversity
         st.markdown("#### Commodity Diversity by Country")
-        diversity = df.groupby('country_name')['commodity'].nunique().sort_values(ascending=False).head(15).reset_index()
+        top_n_diversity = st.slider("Select number of countries to display:", min_value=5, max_value=30, value=15, step=5, key="diversity_slider")
+        
+        diversity = df.groupby('country_name')['commodity'].nunique().sort_values(ascending=False).head(top_n_diversity).reset_index()
         diversity.columns = ['Country', 'Unique Commodities']
         
         fig_diversity = px.bar(
             diversity,
             x='Country',
             y='Unique Commodities',
-            title='Top 15 Countries by Commodity Diversity',
+            title=f'Top {top_n_diversity} Countries by Commodity Diversity',
             text_auto=True
         )
         st.plotly_chart(fig_diversity, use_container_width=True)
@@ -524,10 +530,11 @@ elif page == "🔍 EDA Explorer":
         st.markdown("### 🔗 Correlation Analysis")
         
         st.markdown("#### Top Commodities Correlation Matrix")
-        st.write("Analyzing correlation between import patterns of top 15 commodities")
+        top_n_corr = st.slider("Select number of commodities for correlation:", min_value=5, max_value=30, value=15, step=5, key="correlation_slider")
+        st.write(f"Analyzing correlation between import patterns of top {top_n_corr} commodities")
         
         # Get top commodities
-        top_commodities = df.groupby('commodity')['value_dl'].sum().nlargest(15).index.tolist()
+        top_commodities = df.groupby('commodity')['value_dl'].sum().nlargest(top_n_corr).index.tolist()
         
         # Create monthly pivot for correlation
         corr_data = df[df['commodity'].isin(top_commodities)].copy()
@@ -824,9 +831,10 @@ elif page == "🎯 Interactive Models":
                     help=f"This commodity ranks #{commodity_rank} among all commodities imported by {selected_country}"
                 )
                 
-                # Show top 10 for context
-                st.markdown("**Top 10 Commodities for This Country:**")
-                top_10 = country_commodities.head(10)
+                # Show top commodities for context
+                top_n_ranking = st.slider("Number of top commodities to show:", min_value=5, max_value=30, value=10, step=5, key="ranking_slider")
+                st.markdown(f"**Top {top_n_ranking} Commodities for This Country:**")
+                top_n = country_commodities.head(top_n_ranking)
                 
                 # Highlight selected commodity
                 def highlight_selected(row):
@@ -835,9 +843,9 @@ elif page == "🎯 Interactive Models":
                     return [''] * len(row)
                 
                 st.dataframe(
-                    top_10[['rank', 'commodity', 'value_dl']].style.apply(highlight_selected, axis=1),
+                    top_n[['rank', 'commodity', 'value_dl']].style.apply(highlight_selected, axis=1),
                     use_container_width=True,
-                    height=400
+                    height=min(400, max(200, top_n_ranking * 40))
                 )
         
         # Share over time
@@ -1036,8 +1044,9 @@ elif page == "🎯 Interactive Models":
         
         # Detailed data view
         st.markdown("#### Raw Data Sample")
+        sample_rows = st.number_input("Number of rows to display:", min_value=10, max_value=100, value=20, step=10, key="sample_rows")
         st.dataframe(
-            filtered_data[['date', 'value_dl', 'value_qt', 'unit', 'year', 'month_name']].head(20),
+            filtered_data[['date', 'value_dl', 'value_qt', 'unit', 'year', 'month_name']].head(sample_rows),
             use_container_width=True
         )
     
