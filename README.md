@@ -28,10 +28,11 @@ This project provides a comprehensive data analysis and machine learning platfor
    - **5-10 Year Time Series Forecasting** with confidence intervals
    - Model performance comparison with R², MAE, RMSE metrics
 
-2. **🎯 Classification Models** - Import Trend Prediction
-   - Predicts if trade is **Growing** (>10% YoY), **Stable** (-10% to +10%), or **Declining** (<-10%)
+2. **🎯 Classification Models** - Country Prediction
+   - Predicts **which country** is importing based on commodity type and import value
+   - Uses top 15 countries for accurate predictions
    - Logistic Regression, Random Forest, and XGBoost classifiers
-   - Confusion matrix visualization
+   - Sample predictions with actual vs predicted countries
    - Feature importance analysis
 
 3. **🔍 Clustering Models** - Co-Occurrence Analysis
@@ -157,7 +158,7 @@ streamlit run streamlit_app.py
 
 ### 3. 🤖 Interactive Models
 - **Regression Tab**: Predict import values with 5-10 year forecasts
-- **Classification Tab**: Identify growing/stable/declining trade relationships
+- **Classification Tab**: Predict which country imports based on commodity and value
 - **Clustering Tab**: Discover commodity co-occurrence patterns
 
 ---
@@ -166,10 +167,11 @@ streamlit run streamlit_app.py
 
 ### Business Applications
 - **Strategic Procurement**: Identify commodities frequently imported together for bundle deals
-- **Market Intelligence**: Detect emerging (growing) and declining trade relationships
+- **Market Intelligence**: Predict which countries import specific commodities, identify trade partners
 - **Budget Planning**: 5-10 year import value forecasts for financial planning
 - **Risk Management**: Understand trade volatility and seasonal patterns
 - **Supplier Negotiation**: Data-driven insights on import trends and pricing
+- **Trade Opportunity**: Discover untapped markets for specific commodity-value combinations
 
 ### Data Science Applications
 - Feature engineering techniques for time series data
@@ -183,12 +185,13 @@ streamlit run streamlit_app.py
 ## 🔄 Recent Updates
 
 ### Latest Enhancements
-- ✅ **Import Trend Classification** - Predict Growing/Stable/Declining patterns
+- ✅ **Country Classification** - Predict which country imports based on commodity and value
 - ✅ **5-10 Year Time Series Forecasting** - Long-term predictions with confidence intervals
 - ✅ **Co-Occurrence Clustering** - Market basket analysis for commodities
 - ✅ **Smart Currency Formatting** - Automatic B/M/K notation
 - ✅ **Dynamic Filtering** - All 59 countries and 123 commodities selectable
 - ✅ **Infinity/NaN Handling** - Robust data preprocessing for edge cases
+- ✅ **Top 15 Country Focus** - Improved classification accuracy with targeted country set
 
 ---
 
