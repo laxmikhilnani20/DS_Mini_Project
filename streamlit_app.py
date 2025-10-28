@@ -8,7 +8,7 @@ import pandas as pd
 import warnings
 
 # Import page modules
-from pages import data_overview, eda_explorer, ml_models
+from pages import data_overview, eda_explorer, ml_models, anomaly_detection, risk_optimization
 
 warnings.filterwarnings('ignore')
 
@@ -105,7 +105,9 @@ page = st.sidebar.radio(
     [
         "📊 Data Overview",
         "🔍 EDA Explorer", 
-        "🎯 Interactive Models"
+        "🎯 Interactive Models",
+        "🔍 Anomaly Detection",
+        "⚠️ Risk & Optimization"
     ],
     index=0
 )
@@ -132,6 +134,12 @@ elif page == "🔍 EDA Explorer":
 
 elif page == "🎯 Interactive Models":
     ml_models.render(df)
+
+elif page == "🔍 Anomaly Detection":
+    anomaly_detection.render(df)
+
+elif page == "⚠️ Risk & Optimization":
+    risk_optimization.render(df)
 
 # ======================================================================
 # FOOTER
