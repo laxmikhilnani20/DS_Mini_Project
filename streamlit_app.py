@@ -1337,7 +1337,12 @@ elif page == "🎯 Interactive Models":
         class_data['commodity_encoded'] = le_commodity_class.fit_transform(class_data['commodity'])
         
         # Create value bins (categorical feature from continuous value)
-        class_data['value_bin'] = pd.qcut(class_data['value_dl'], q=5, labels=['Very Low', 'Low', 'Medium', 'High', 'Very High'], duplicates='drop')
+        try:
+            class_data['value_bin'] = pd.qcut(class_data['value_dl'], q=5, labels=['Very Low', 'Low', 'Medium', 'High', 'Very High'], duplicates='drop')
+        except ValueError:
+            # If qcut fails due to duplicates, use cut with manual bins
+            class_data['value_bin'] = pd.cut(class_data['value_dl'], bins=5, labels=['Very Low', 'Low', 'Medium', 'High', 'Very High'])
+        
         le_value_bin = LabelEncoder()
         class_data['value_bin_encoded'] = le_value_bin.fit_transform(class_data['value_bin'])
         
