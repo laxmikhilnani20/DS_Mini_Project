@@ -177,7 +177,7 @@ def render(df):
                 color='Count',
                 color_continuous_scale='Reds'
             )
-            st.plotly_chart(fig_types, width='stretch')
+            st.plotly_chart(fig_types, use_container_width=True)
         
         with col2:
             # Severity distribution
@@ -205,7 +205,7 @@ def render(df):
                     'Critical': '#FF4500'
                 }
             )
-            st.plotly_chart(fig_severity, width='stretch')
+            st.plotly_chart(fig_severity, use_container_width=True)
         
         # Top anomalies
         st.markdown("---")
@@ -218,7 +218,7 @@ def render(df):
         display_anomalies['value_dl'] = display_anomalies['value_dl'].apply(lambda x: format_currency(x))
         display_anomalies.columns = ['Date', 'Country', 'Commodity', 'Value', 'Severity', 'Score']
         
-        st.dataframe(display_anomalies, width='stretch', height=400)
+        st.dataframe(display_anomalies, use_container_width=True, height=400)
         
         # Download anomalies
         st.markdown("---")
@@ -343,7 +343,7 @@ def render(df):
                 height=500
             )
             
-            st.plotly_chart(fig_ts, width='stretch')
+            st.plotly_chart(fig_ts, use_container_width=True)
             
             # Stats
             st.markdown("### 📊 Time Series Statistics")
@@ -391,7 +391,7 @@ def render(df):
                 color=price_anomaly_counts.values,
                 color_continuous_scale='Reds'
             )
-            st.plotly_chart(fig_price_comm, width='stretch')
+            st.plotly_chart(fig_price_comm, use_container_width=True)
             
             # Select commodity for detailed analysis
             st.markdown("---")
@@ -428,7 +428,7 @@ def render(df):
                         annotation_text=f"Median: {median_price:.2f}"
                     )
                     
-                    st.plotly_chart(fig_price_dist, width='stretch')
+                    st.plotly_chart(fig_price_dist, use_container_width=True)
                 
                 with col2:
                     fig_price_box = px.box(
@@ -437,7 +437,7 @@ def render(df):
                         title=f'{selected_commodity_price} - Price Box Plot',
                         labels={'unit_price': 'Unit Price (USD)'}
                     )
-                    st.plotly_chart(fig_price_box, width='stretch')
+                    st.plotly_chart(fig_price_box, use_container_width=True)
                 
                 # Price over time
                 st.markdown("#### 📈 Price Evolution Over Time")
@@ -479,7 +479,7 @@ def render(df):
                     height=400
                 )
                 
-                st.plotly_chart(fig_price_trend, width='stretch')
+                st.plotly_chart(fig_price_trend, use_container_width=True)
                 
                 # Anomalous transactions
                 st.markdown("#### 🚨 Anomalous Price Transactions")
@@ -493,7 +493,7 @@ def render(df):
                     display_price['value_dl'] = display_price['value_dl'].apply(lambda x: format_currency(x))
                     display_price.columns = ['Date', 'Country', 'Value', 'Quantity', 'Unit Price', 'Anomaly Score']
                     
-                    st.dataframe(display_price, width='stretch')
+                    st.dataframe(display_price, use_container_width=True)
                 else:
                     st.info("No price anomalies detected for this commodity")
     
@@ -549,7 +549,7 @@ def render(df):
             marginal='box'
         )
         
-        st.plotly_chart(fig_stat, width='stretch')
+        st.plotly_chart(fig_stat, use_container_width=True)
         
         # Anomalies by country
         st.markdown("---")
@@ -567,7 +567,7 @@ def render(df):
             color_continuous_scale='Reds'
         )
         
-        st.plotly_chart(fig_country, width='stretch')
+        st.plotly_chart(fig_country, use_container_width=True)
     
     # ===== TAB 5: CRITICAL ALERTS =====
     with anomaly_tabs[4]:
@@ -597,7 +597,7 @@ def render(df):
             col1, col2 = st.columns([1, 2])
             
             with col1:
-                st.dataframe(critical_stats, width='stretch')
+                st.dataframe(critical_stats, use_container_width=True)
             
             with col2:
                 fig_crit = px.pie(
@@ -606,7 +606,7 @@ def render(df):
                     names='Category',
                     title='Critical Anomalies Breakdown'
                 )
-                st.plotly_chart(fig_crit, width='stretch')
+                st.plotly_chart(fig_crit, use_container_width=True)
             
             # Recent critical anomalies
             st.markdown("---")
@@ -622,7 +622,7 @@ def render(df):
                 display_recent['value_dl'] = display_recent['value_dl'].apply(lambda x: format_currency(x))
                 display_recent.columns = ['Date', 'Country', 'Commodity', 'Value', 'Severity', 'Score']
                 
-                st.dataframe(display_recent, width='stretch', height=400)
+                st.dataframe(display_recent, use_container_width=True, height=400)
             else:
                 st.info("No critical anomalies in the last 30 days")
             
@@ -638,7 +638,7 @@ def render(df):
             affected_commodities.columns = ['Total Value', 'Anomaly Count']
             affected_commodities['Total Value'] = affected_commodities['Total Value'].apply(lambda x: format_currency(x))
             
-            st.dataframe(affected_commodities, width='stretch')
+            st.dataframe(affected_commodities, use_container_width=True)
         else:
             st.success("✅ No critical anomalies detected!")
         

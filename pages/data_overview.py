@@ -126,7 +126,7 @@ def render(df):
     # Display data
     st.dataframe(
         filtered_df[['date', 'country_name', 'commodity', 'value_dl', 'value_qt', 'unit', 'sub_region']].head(1000),
-        width='stretch',
+        use_container_width=True,
         height=400
     )
     

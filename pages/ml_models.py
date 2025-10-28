@@ -186,7 +186,7 @@ def render(df):
             # Display results
             results_df = pd.DataFrame(results).T
             results_df = results_df.round(4)
-            st.dataframe(results_df, width='stretch')
+            st.dataframe(results_df, use_container_width=True)
             
             # Best model
             best_model = results_df['R² Score'].idxmax()
@@ -235,7 +235,7 @@ def render(df):
                 hovermode='x unified'
             )
             
-            st.plotly_chart(fig_reg, width='stretch')
+            st.plotly_chart(fig_reg, use_container_width=True)
             
             # Feature Importance (for tree-based models)
             if best_model in ['Random Forest', 'XGBoost']:
@@ -258,7 +258,7 @@ def render(df):
                     color='Importance',
                     color_continuous_scale='Blues'
                 )
-                st.plotly_chart(fig_imp, width='stretch')
+                st.plotly_chart(fig_imp, use_container_width=True)
                 
                 st.markdown("""
                 <div class="insight-box">
@@ -386,7 +386,7 @@ def render(df):
                 height=500
             )
             
-            st.plotly_chart(fig_forecast, width='stretch')
+            st.plotly_chart(fig_forecast, use_container_width=True)
             
             # Summary stats
             col1, col2, col3 = st.columns(3)
@@ -473,7 +473,7 @@ def render(df):
                     color_discrete_sequence=['#4CAF50', '#FF9800', '#F44336'],
                     color_discrete_map={'Growing': '#4CAF50', 'Stable': '#FF9800', 'Declining': '#F44336'}
                 )
-                st.plotly_chart(fig_trend_dist, width='stretch')
+                st.plotly_chart(fig_trend_dist, use_container_width=True)
             
             with col2:
                 st.metric("Growing Trades", f"{trend_dist.get('Growing', 0):,}")
@@ -552,7 +552,7 @@ def render(df):
             # Display results
             trend_results_df = pd.DataFrame(trend_results).T
             trend_results_df = trend_results_df.round(4)
-            st.dataframe(trend_results_df, width='stretch')
+            st.dataframe(trend_results_df, use_container_width=True)
             
             best_trend_model = trend_results_df['Accuracy'].idxmax()
             st.success(f"🏆 **Best Model:** {best_trend_model} (Accuracy = {trend_results_df.loc[best_trend_model, 'Accuracy']:.4f})")
@@ -584,7 +584,7 @@ def render(df):
                 color_continuous_scale='RdYlGn',
                 title=f'Trend Prediction Confusion Matrix - {best_trend_model}'
             )
-            st.plotly_chart(fig_cm_trend, width='stretch')
+            st.plotly_chart(fig_cm_trend, use_container_width=True)
             
             # Feature Importance (for tree models)
             if best_trend_model in ['Random Forest', 'XGBoost']:
@@ -607,7 +607,7 @@ def render(df):
                     color='Importance',
                     color_continuous_scale='Viridis'
                 )
-                st.plotly_chart(fig_imp_trend, width='stretch')
+                st.plotly_chart(fig_imp_trend, use_container_width=True)
     
     # ========================================================================
     # TAB 3: CLUSTERING MODELS - CO-OCCURRENCE ANALYSIS
@@ -668,7 +668,7 @@ def render(df):
         
         if co_occur_pairs:
             co_occur_df = pd.DataFrame(co_occur_pairs).sort_values('Co-Occurrence Score', ascending=False).head(20)
-            st.dataframe(co_occur_df, width='stretch')
+            st.dataframe(co_occur_df, use_container_width=True)
             
             st.markdown("""
             <div class="insight-box">
@@ -719,7 +719,7 @@ def render(df):
                 yaxis_title='Inertia',
                 height=400
             )
-            st.plotly_chart(fig_elbow, width='stretch')
+            st.plotly_chart(fig_elbow, use_container_width=True)
             
             if silhouette_scores:
                 optimal_k = silhouette_scores.index(max(silhouette_scores)) + 2
@@ -758,7 +758,7 @@ def render(df):
                 color_discrete_sequence=px.colors.qualitative.Set3,
                 height=600
             )
-            st.plotly_chart(fig_clusters, width='stretch')
+            st.plotly_chart(fig_clusters, use_container_width=True)
             
             st.markdown(f"""
             <div class="insight-box">
@@ -797,7 +797,7 @@ def render(df):
                 })
             
             cluster_chars_df = pd.DataFrame(cluster_chars).sort_values('Total Value', ascending=False)
-            st.dataframe(cluster_chars_df, width='stretch')
+            st.dataframe(cluster_chars_df, use_container_width=True)
             
             st.markdown("""
             <div class="insight-box">

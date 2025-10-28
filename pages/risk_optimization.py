@@ -90,7 +90,7 @@ def render(df):
                 title='Top 10 Countries by Import Share (%)',
                 labels={'x': 'Market Share (%)', 'y': 'Country'}
             )
-            st.plotly_chart(fig_country, width='stretch')
+            st.plotly_chart(fig_country, use_container_width=True)
         
         with col2:
             commodity_shares = df.groupby('commodity')['value_dl'].sum().nlargest(10)
@@ -103,7 +103,7 @@ def render(df):
                 title='Top 10 Commodities by Import Share (%)',
                 labels={'x': 'Market Share (%)', 'y': 'Commodity'}
             )
-            st.plotly_chart(fig_commodity, width='stretch')
+            st.plotly_chart(fig_commodity, use_container_width=True)
         
         # Lorenz curve
         st.markdown("---")
@@ -134,7 +134,7 @@ def render(df):
             xaxis_title='Cumulative % of Countries',
             yaxis_title='Cumulative % of Import Value'
         )
-        st.plotly_chart(fig_lorenz, width='stretch')
+        st.plotly_chart(fig_lorenz, use_container_width=True)
         
         st.info(f"**Gini Coefficient: {gini:.3f}** (0 = perfect equality, 1 = total inequality)")
     
@@ -191,7 +191,7 @@ def render(df):
                 height=500
             )
             
-            st.plotly_chart(fig_seasonal, width='stretch')
+            st.plotly_chart(fig_seasonal, use_container_width=True)
             
             # Best and worst months
             st.markdown("---")
@@ -292,7 +292,7 @@ def render(df):
             color_continuous_scale='Reds',
             labels={'CV (%)': 'Volatility (%)'}
         )
-        st.plotly_chart(fig_vol, width='stretch')
+        st.plotly_chart(fig_vol, use_container_width=True)
         
         # Table
         st.markdown("### �� Volatility Details")
@@ -301,7 +301,7 @@ def render(df):
         display_vol['Std Dev'] = display_vol['Std Dev'].apply(lambda x: format_currency(x))
         display_vol['CV (%)'] = display_vol['CV (%)'].round(1)
         
-        st.dataframe(display_vol, width='stretch', height=400)
+        st.dataframe(display_vol, use_container_width=True, height=400)
         
         st.markdown("""
         <div class="insight-box">

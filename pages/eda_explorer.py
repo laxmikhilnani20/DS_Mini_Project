@@ -117,7 +117,7 @@ def render(df):
             markers=True
         )
         fig_monthly_eda.update_traces(line_color='#1E88E5', line_width=2.5)
-        st.plotly_chart(fig_monthly_eda, width='stretch')
+        st.plotly_chart(fig_monthly_eda, use_container_width=True)
         
         st.markdown("""
         <div class="insight-box">
@@ -147,7 +147,7 @@ def render(df):
                 color='Total Value',
                 color_continuous_scale='Blues'
             )
-            st.plotly_chart(fig_yearly_eda, width='stretch')
+            st.plotly_chart(fig_yearly_eda, use_container_width=True)
         
         with col2:
             if len(yearly_eda.dropna()) > 0:
@@ -160,7 +160,7 @@ def render(df):
                 )
                 fig_yoy_eda.add_hline(y=0, line_dash="dash", line_color="gray")
                 fig_yoy_eda.update_traces(line_color='#FF6B6B', line_width=3)
-                st.plotly_chart(fig_yoy_eda, width='stretch')
+                st.plotly_chart(fig_yoy_eda, use_container_width=True)
             else:
                 st.info("Insufficient years for YoY analysis")
         
@@ -192,7 +192,7 @@ def render(df):
             color='Total',
             color_continuous_scale='Viridis'
         )
-        st.plotly_chart(fig_seasonal_eda, width='stretch')
+        st.plotly_chart(fig_seasonal_eda, use_container_width=True)
         
         st.markdown("""
         <div class="insight-box">
@@ -218,7 +218,7 @@ def render(df):
             color='quarter',
             color_continuous_scale='Teal'
         )
-        st.plotly_chart(fig_quarterly_eda, width='stretch')
+        st.plotly_chart(fig_quarterly_eda, use_container_width=True)
         
         st.markdown("""
         <div class="insight-box">
@@ -250,7 +250,7 @@ def render(df):
             title=f'Top {top_n_countries} Importing Countries',
             text_auto='.2s'
         )
-        st.plotly_chart(fig_countries, width='stretch')
+        st.plotly_chart(fig_countries, use_container_width=True)
         
         # Geographic map
         st.markdown("#### Import Value Heatmap")
@@ -266,7 +266,7 @@ def render(df):
             labels={'value_dl': 'Total Value (USD)'}
         )
         fig_map.update_geos(scope='africa')
-        st.plotly_chart(fig_map, width='stretch')
+        st.plotly_chart(fig_map, use_container_width=True)
         
         # Regional breakdown
         st.markdown("#### Regional Analysis")
@@ -280,7 +280,7 @@ def render(df):
                 names='Sub-Region',
                 title='Import Distribution by Sub-Region'
             )
-            st.plotly_chart(fig_regional, width='stretch')
+            st.plotly_chart(fig_regional, use_container_width=True)
     
     # ===== TAB 3: COMMODITY INSIGHTS =====
     with eda_tabs[2]:
@@ -304,7 +304,7 @@ def render(df):
             text_auto='.2s',
             height=max(400, top_n_commodities * 25)  # Dynamic height based on number of items
         )
-        st.plotly_chart(fig_commodities, width='stretch')
+        st.plotly_chart(fig_commodities, use_container_width=True)
         
         # Commodity diversity
         st.markdown("#### Commodity Diversity by Country")
@@ -321,7 +321,7 @@ def render(df):
             title=f'Top {top_n_diversity} Countries by Commodity Diversity',
             text_auto=True
         )
-        st.plotly_chart(fig_diversity, width='stretch')
+        st.plotly_chart(fig_diversity, use_container_width=True)
         
         st.info("📊 **Insight**: Higher commodity diversity indicates more complex import portfolios and varied industrial needs.")
     
@@ -340,7 +340,7 @@ def render(df):
                 labels={'value_dl': 'Transaction Value (USD)'},
                 marginal='box'
             )
-            st.plotly_chart(fig_hist_eda, width='stretch')
+            st.plotly_chart(fig_hist_eda, use_container_width=True)
         
         with col2:
             fig_box_eda = px.box(
@@ -349,7 +349,7 @@ def render(df):
                 title='Statistical Summary (Box Plot)',
                 labels={'value_dl': 'Transaction Value (USD)'}
             )
-            st.plotly_chart(fig_box_eda, width='stretch')
+            st.plotly_chart(fig_box_eda, use_container_width=True)
         
         st.markdown("""
         <div class="insight-box">
@@ -379,7 +379,7 @@ def render(df):
                                                name='6-Month MA', line=dict(color='#FF6B6B', width=2.5)))
             fig_ma_eda.update_layout(title='Trend Analysis with Moving Averages', 
                                      xaxis_title='Date', yaxis_title='Import Value (USD)')
-            st.plotly_chart(fig_ma_eda, width='stretch')
+            st.plotly_chart(fig_ma_eda, use_container_width=True)
         else:
             st.info("Insufficient data points for moving average calculation")
         
@@ -410,7 +410,7 @@ def render(df):
                 color_continuous_scale='Plasma',
                 hover_data=['date', 'unit_price']
             )
-            st.plotly_chart(fig_scatter_eda, width='stretch')
+            st.plotly_chart(fig_scatter_eda, use_container_width=True)
             
             if len(valid_qty_data) > 0:
                 price_trend = valid_qty_data.resample('M', on='date')['unit_price'].mean().reset_index()
@@ -422,7 +422,7 @@ def render(df):
                     labels={'unit_price': 'Unit Price (USD)', 'date': 'Date'},
                     markers=True
                 )
-                st.plotly_chart(fig_price_eda, width='stretch')
+                st.plotly_chart(fig_price_eda, use_container_width=True)
         else:
             st.info("No quantity data available for this selection")
         
@@ -450,7 +450,7 @@ def render(df):
             labels={'Cumulative Value': 'Total Cumulative Value (USD)'}
         )
         fig_cumulative_eda.update_traces(fillcolor='rgba(30,136,229,0.3)', line_color='#1E88E5')
-        st.plotly_chart(fig_cumulative_eda, width='stretch')
+        st.plotly_chart(fig_cumulative_eda, use_container_width=True)
         
         st.markdown("""
         <div class="insight-box">
@@ -471,7 +471,7 @@ def render(df):
                 title='Import Value Distribution by Sub-Region',
                 labels={'value_dl': 'Value (USD)', 'sub_region': 'Sub-Region'}
             )
-            st.plotly_chart(fig_box, width='stretch')
+            st.plotly_chart(fig_box, use_container_width=True)
     
     # ===== TAB 5: CORRELATIONS =====
     with eda_tabs[4]:
@@ -507,7 +507,7 @@ def render(df):
                 color_continuous_scale='RdBu_r',
                 aspect='auto'
             )
-            st.plotly_chart(fig_corr, width='stretch')
+            st.plotly_chart(fig_corr, use_container_width=True)
             
             st.info("📊 **Insight**: Positive correlation (red) suggests commodities imported together; negative (blue) suggests inverse patterns.")
     
@@ -539,7 +539,7 @@ def render(df):
                 title='Import Value Comparison Over Time',
                 labels={'Value': 'Total Value (USD)'}
             )
-            st.plotly_chart(fig_compare, width='stretch')
+            st.plotly_chart(fig_compare, use_container_width=True)
         
         # Concentration analysis
         st.markdown("#### Market Concentration")
@@ -560,7 +560,7 @@ def render(df):
                 labels={'rank': 'Country Rank', 'cumulative_pct': 'Cumulative % of Total Value'}
             )
             fig_conc.add_hline(y=80, line_dash="dash", annotation_text="80%")
-            st.plotly_chart(fig_conc, width='stretch')
+            st.plotly_chart(fig_conc, use_container_width=True)
         
         with col2:
             commodity_conc = df.groupby('commodity')['value_dl'].sum().sort_values(ascending=False).reset_index()
@@ -575,7 +575,7 @@ def render(df):
                 labels={'rank': 'Commodity Rank', 'cumulative_pct': 'Cumulative % of Total Value'}
             )
             fig_comm_conc.add_hline(y=80, line_dash="dash", annotation_text="80%")
-            st.plotly_chart(fig_comm_conc, width='stretch')
+            st.plotly_chart(fig_comm_conc, use_container_width=True)
 
 # ======================================================================
 # DASHBOARD 3: INTERACTIVE MACHINE LEARNING MODELS
