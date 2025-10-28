@@ -70,6 +70,24 @@ st.markdown("""
     [data-testid="stMarkdownContainer"] {
         color: var(--text-color);
     }
+    
+    /* Prevent content overflow and ensure proper containment */
+    .main .block-container {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    /* Ensure each page section is isolated */
+    section[data-testid="stAppViewContainer"] > div {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Fix footer to prevent bleeding */
+    div[data-testid="stMarkdownContainer"] > div {
+        width: 100%;
+        overflow: hidden;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1699,7 +1717,7 @@ elif page == "🎯 Interactive Models":
 # ======================================================================
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #666; padding: 2rem 0;">
+<div style="text-align: center; opacity: 0.7; padding: 2rem 0;">
     <p><strong>African Imports Analytics Platform</strong></p>
     <p>Comprehensive analysis of import data from African countries (2015-2025)</p>
     <p style="font-size: 0.9rem;">Data-driven insights for trade policy and procurement strategy</p>
