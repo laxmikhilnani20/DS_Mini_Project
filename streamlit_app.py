@@ -1285,196 +1285,178 @@ elif page == "🎯 Interactive Models":
     # TAB 2: CLASSIFICATION MODELS - IMPORT TREND PREDICTION
     # ========================================================================
     with ml_tabs[1]:
-        st.markdown("### 🎯 Classification: Predict Import Trend Direction")
+        st.markdown("### 🎯 Classification: Predict Importing Country")
         
         st.markdown("""
         <div class="insight-box">
-        <h4>🎓 What is Import Trend Classification?</h4>
-        <p>This model predicts whether a country-commodity trade relationship is <b>Growing, Stable, or Declining</b>.</p>
-        <p><b>Use Cases:</b> Identify emerging markets, detect declining trade relationships, strategic procurement planning</p>
+        <h4>🎓 What is Country Classification?</h4>
+        <p>This model predicts <b>which country</b> is importing based on the commodity type and import value.</p>
+        <p><b>Use Cases:</b> Market intelligence, trade pattern analysis, identify typical importers for specific commodities</p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("---")
         
-        # Prepare trend classification data
-        st.markdown("#### 📊 Building Trend Dataset")
+        # Prepare country classification data
+        st.markdown("#### 📊 Building Classification Dataset")
         
-        # Aggregate by country-commodity-year
-        trend_data = ml_data.groupby(['country_name', 'commodity', 'year'])['value_dl'].sum().reset_index()
+        # Use ml_data directly, filter to top countries for better accuracy
+        country_counts = ml_data['country_name'].value_counts()
+        top_countries = country_counts.head(15).index.tolist()  # Focus on top 15 countries
         
-        # Calculate year-over-year growth
-        trend_data = trend_data.sort_values(['country_name', 'commodity', 'year'])
-        trend_data['yoy_growth'] = trend_data.groupby(['country_name', 'commodity'])['value_dl'].pct_change() * 100
+        class_data = ml_data[ml_data['country_name'].isin(top_countries)].copy()
         
-        # Create trend category based on growth rate
-        def categorize_trend(growth):
-            if pd.isna(growth):
-                return None
-            elif growth > 10:
-                return 'Growing'
-            elif growth < -10:
-                return 'Declining'
-            else:
-                return 'Stable'
+        st.info(f"📊 Using top {len(top_countries)} countries with {len(class_data):,} transactions")
         
-        trend_data['trend_category'] = trend_data['yoy_growth'].apply(categorize_trend)
-        trend_data = trend_data.dropna(subset=['trend_category'])
+        # Show country distribution
+        st.markdown("#### 🌍 Country Distribution")
+        country_dist = class_data['country_name'].value_counts()
         
-        if len(trend_data) < 50:
-            st.warning("⚠️ Insufficient data for trend classification (need at least 50 year-over-year records)")
-        else:
-            st.success(f"✅ Built trend dataset with {len(trend_data):,} year-over-year observations")
-            
-            # Show trend distribution
-            st.markdown("#### 📈 Trend Distribution")
-            trend_dist = trend_data['trend_category'].value_counts()
-            
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
-                fig_trend_dist = px.pie(
-                    values=trend_dist.values,
-                    names=trend_dist.index,
-                    title='Import Trend Categories',
-                    color_discrete_sequence=['#4CAF50', '#FF9800', '#F44336'],
-                    color_discrete_map={'Growing': '#4CAF50', 'Stable': '#FF9800', 'Declining': '#F44336'}
-                )
-                st.plotly_chart(fig_trend_dist, use_container_width=True)
-            
-            with col2:
-                st.metric("Growing Trades", f"{trend_dist.get('Growing', 0):,}")
-                st.metric("Stable Trades", f"{trend_dist.get('Stable', 0):,}")
-                st.metric("Declining Trades", f"{trend_dist.get('Declining', 0):,}")
-            
-            # Prepare features for classification
-            # Encode country and commodity
-            le_country_trend = LabelEncoder()
-            le_commodity_trend = LabelEncoder()
-            trend_data['country_encoded'] = le_country_trend.fit_transform(trend_data['country_name'])
-            trend_data['commodity_encoded'] = le_commodity_trend.fit_transform(trend_data['commodity'])
-            
-            # Add lag features
-            trend_data = trend_data.sort_values(['country_name', 'commodity', 'year'])
-            trend_data['value_lag1'] = trend_data.groupby(['country_name', 'commodity'])['value_dl'].shift(1)
-            trend_data['growth_lag1'] = trend_data.groupby(['country_name', 'commodity'])['yoy_growth'].shift(1)
-            
-            trend_data = trend_data.dropna()
-            
-            feature_cols_trend = ['year', 'country_encoded', 'commodity_encoded', 
-                                 'value_dl', 'value_lag1', 'yoy_growth', 'growth_lag1']
-            
-            X_trend = trend_data[feature_cols_trend].copy()
-            
-            # Replace infinity and extreme values
-            X_trend = X_trend.replace([np.inf, -np.inf], np.nan)
-            X_trend = X_trend.fillna(0)
-            # Cap extremely large values
-            for col in X_trend.columns:
-                if X_trend[col].dtype in [np.float64, np.int64]:
-                    X_trend[col] = X_trend[col].clip(-1e10, 1e10)
-            
-            y_trend = trend_data['trend_category']
-            
-            # Encode target
-            le_target_trend = LabelEncoder()
-            y_trend_encoded = le_target_trend.fit_transform(y_trend)
-            trend_class_names = le_target_trend.classes_
-            
-            # Train-test split
-            st.markdown("---")
-            test_size_trend = st.slider("Test Set Size (%)", 10, 40, 20, 5, key="trend_test_size") / 100
-            X_train_t, X_test_t, y_train_t, y_test_t = train_test_split(
-                X_trend, y_trend_encoded, test_size=test_size_trend, random_state=42, stratify=y_trend_encoded
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            fig_country_dist = px.bar(
+                x=country_dist.head(10).values,
+                y=country_dist.head(10).index,
+                orientation='h',
+                title='Top 10 Countries by Transaction Count',
+                labels={'x': 'Number of Transactions', 'y': 'Country'},
+                color=country_dist.head(10).values,
+                color_continuous_scale='Viridis'
             )
-            
-            st.info(f"📊 Training on {len(X_train_t)} samples, Testing on {len(X_test_t)} samples")
-            
-            # Train models
+            st.plotly_chart(fig_country_dist, use_container_width=True)
+        
+        with col2:
+            st.metric("Total Countries", len(top_countries))
+            st.metric("Total Transactions", f"{len(class_data):,}")
+            st.metric("Avg per Country", f"{len(class_data) // len(top_countries):,}")
+        
+        # Prepare features for classification
+        # Encode commodity
+        le_commodity_class = LabelEncoder()
+        class_data['commodity_encoded'] = le_commodity_class.fit_transform(class_data['commodity'])
+        
+        # Create value bins (categorical feature from continuous value)
+        class_data['value_bin'] = pd.qcut(class_data['value_dl'], q=5, labels=['Very Low', 'Low', 'Medium', 'High', 'Very High'], duplicates='drop')
+        le_value_bin = LabelEncoder()
+        class_data['value_bin_encoded'] = le_value_bin.fit_transform(class_data['value_bin'])
+        
+        # Features: commodity, value (actual and binned), year, month
+        feature_cols_class = ['commodity_encoded', 'value_dl', 'value_bin_encoded', 'year', 'month']
+        
+        X_class = class_data[feature_cols_class].copy()
+        
+        # Replace infinity and extreme values
+        X_class = X_class.replace([np.inf, -np.inf], np.nan)
+        X_class = X_class.fillna(0)
+        for col in X_class.columns:
+            if X_class[col].dtype in [np.float64, np.int64]:
+                X_class[col] = X_class[col].clip(-1e10, 1e10)
+        
+        # Target: country
+        y_class = class_data['country_name']
+        
+        # Encode target
+        le_country_class = LabelEncoder()
+        y_class_encoded = le_country_class.fit_transform(y_class)
+        country_class_names = le_country_class.classes_
+        
+        # Train-test split
+        st.markdown("---")
+        test_size_class = st.slider("Test Set Size (%)", 10, 40, 20, 5, key="class_test_size") / 100
+        X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(
+            X_class, y_class_encoded, test_size=test_size_class, random_state=42, stratify=y_class_encoded
+        )
+        
+        st.info(f"📊 Training on {len(X_train_c):,} samples, Testing on {len(X_test_c):,} samples")
+        
+        # Train models
+        st.markdown("---")
+        st.markdown("#### 🤖 Model Performance Comparison")
+        
+        class_models = {
+            'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42),
+            'Random Forest': RandomForestClassifier(n_estimators=100, max_depth=15, random_state=42),
+            'XGBoost': xgb.XGBClassifier(n_estimators=100, max_depth=8, learning_rate=0.1, random_state=42, eval_metric='mlogloss')
+        }
+        
+        class_results = {}
+        class_predictions = {}
+        
+        with st.spinner("Training country classification models..."):
+            for name, model in class_models.items():
+                model.fit(X_train_c, y_train_c)
+                y_pred_c = model.predict(X_test_c)
+                
+                class_results[name] = {
+                    'Accuracy': accuracy_score(y_test_c, y_pred_c),
+                    'Precision': precision_score(y_test_c, y_pred_c, average='weighted', zero_division=0),
+                    'Recall': recall_score(y_test_c, y_pred_c, average='weighted', zero_division=0),
+                    'F1 Score': f1_score(y_test_c, y_pred_c, average='weighted', zero_division=0)
+                }
+                class_predictions[name] = y_pred_c
+        
+        # Display results
+        class_results_df = pd.DataFrame(class_results).T
+        class_results_df = class_results_df.round(4)
+        st.dataframe(class_results_df, use_container_width=True)
+        
+        best_class_model = class_results_df['Accuracy'].idxmax()
+        st.success(f"🏆 **Best Model:** {best_class_model} (Accuracy = {class_results_df.loc[best_class_model, 'Accuracy']:.4f})")
+        
+        st.markdown("""
+        <div class="insight-box">
+        <h4>💡 Business Interpretation:</h4>
+        <p>This model learns which countries typically import which commodities at what price ranges.</p>
+        <ul>
+            <li><b>High Accuracy:</b> Strong patterns between commodity types and importing countries</li>
+            <li><b>Feature Importance:</b> Shows whether country preference is driven more by commodity type or value</li>
+        </ul>
+        <p><b>Use this to:</b> Identify target markets for specific commodities, understand trade relationships, predict new trade opportunities</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Top predictions analysis
+        st.markdown("---")
+        st.markdown("#### 🎯 Top Country Predictions")
+        
+        # Show a sample of predictions
+        sample_size = min(10, len(X_test_c))
+        sample_indices = np.random.choice(len(X_test_c), sample_size, replace=False)
+        
+        predictions_df = pd.DataFrame({
+            'Actual Country': le_country_class.inverse_transform(y_test_c.iloc[sample_indices]),
+            'Predicted Country': le_country_class.inverse_transform(class_predictions[best_class_model][sample_indices]),
+            'Commodity': le_commodity_class.inverse_transform(X_test_c.iloc[sample_indices]['commodity_encoded'].values.astype(int)),
+            'Value (USD)': X_test_c.iloc[sample_indices]['value_dl'].values
+        })
+        predictions_df['Match'] = predictions_df['Actual Country'] == predictions_df['Predicted Country']
+        predictions_df['Match'] = predictions_df['Match'].map({True: '✅', False: '❌'})
+        
+        st.dataframe(predictions_df, use_container_width=True)
+        
+        # Feature Importance (for tree models)
+        if best_class_model in ['Random Forest', 'XGBoost']:
             st.markdown("---")
-            st.markdown("#### 🤖 Model Performance Comparison")
+            st.markdown("#### 📊 Feature Importance - What Drives Country Predictions?")
             
-            trend_models = {
-                'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42),
-                'Random Forest': RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42),
-                'XGBoost': xgb.XGBClassifier(n_estimators=100, max_depth=6, learning_rate=0.1, random_state=42)
-            }
+            model_class = class_models[best_class_model]
+            importances_class = model_class.feature_importances_
+            feature_importance_class_df = pd.DataFrame({
+                'Feature': feature_cols_class,
+                'Importance': importances_class
+            }).sort_values('Importance', ascending=False)
             
-            trend_results = {}
-            trend_predictions = {}
-            
-            with st.spinner("Training trend prediction models..."):
-                for name, model in trend_models.items():
-                    model.fit(X_train_t, y_train_t)
-                    y_pred_t = model.predict(X_test_t)
-                    
-                    trend_results[name] = {
-                        'Accuracy': accuracy_score(y_test_t, y_pred_t),
-                        'Precision': precision_score(y_test_t, y_pred_t, average='weighted'),
-                        'Recall': recall_score(y_test_t, y_pred_t, average='weighted'),
-                        'F1 Score': f1_score(y_test_t, y_pred_t, average='weighted')
-                    }
-                    trend_predictions[name] = y_pred_t
-            
-            # Display results
-            trend_results_df = pd.DataFrame(trend_results).T
-            trend_results_df = trend_results_df.round(4)
-            st.dataframe(trend_results_df, use_container_width=True)
-            
-            best_trend_model = trend_results_df['Accuracy'].idxmax()
-            st.success(f"🏆 **Best Model:** {best_trend_model} (Accuracy = {trend_results_df.loc[best_trend_model, 'Accuracy']:.4f})")
-            
-            st.markdown("""
-            <div class="insight-box">
-            <h4>💡 Business Interpretation:</h4>
-            <ul>
-                <li><b>Growing:</b> YoY growth > 10% - Emerging market opportunities</li>
-                <li><b>Stable:</b> YoY growth between -10% and +10% - Mature, predictable trade</li>
-                <li><b>Declining:</b> YoY growth < -10% - At-risk trade relationships</li>
-            </ul>
-            <p><b>Use this to:</b> Prioritize growing markets, investigate declining trends, maintain stable relationships</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Confusion Matrix
-            st.markdown("---")
-            st.markdown("#### 📊 Confusion Matrix")
-            
-            cm_trend = confusion_matrix(y_test_t, trend_predictions[best_trend_model])
-            
-            fig_cm_trend = px.imshow(
-                cm_trend,
-                labels=dict(x="Predicted Trend", y="Actual Trend", color="Count"),
-                x=trend_class_names,
-                y=trend_class_names,
-                text_auto=True,
-                color_continuous_scale='RdYlGn',
-                title=f'Trend Prediction Confusion Matrix - {best_trend_model}'
+            fig_imp_class = px.bar(
+                feature_importance_class_df,
+                x='Importance',
+                y='Feature',
+                orientation='h',
+                title='Feature Importance for Country Prediction',
+                color='Importance',
+                color_continuous_scale='Viridis'
             )
-            st.plotly_chart(fig_cm_trend, use_container_width=True)
-            
-            # Feature Importance (for tree models)
-            if best_trend_model in ['Random Forest', 'XGBoost']:
-                st.markdown("---")
-                st.markdown("#### 🎯 Feature Importance - What Drives Trend Predictions?")
-                
-                model_trend = trend_models[best_trend_model]
-                importances_trend = model_trend.feature_importances_
-                feature_importance_trend_df = pd.DataFrame({
-                    'Feature': feature_cols_trend,
-                    'Importance': importances_trend
-                }).sort_values('Importance', ascending=False)
-                
-                fig_imp_trend = px.bar(
-                    feature_importance_trend_df,
-                    x='Importance',
-                    y='Feature',
-                    orientation='h',
-                    title='Feature Importance for Trend Prediction',
-                    color='Importance',
-                    color_continuous_scale='Viridis'
-                )
-                st.plotly_chart(fig_imp_trend, use_container_width=True)
+            st.plotly_chart(fig_imp_class, use_container_width=True)
     
     # ========================================================================
     # TAB 3: CLUSTERING MODELS - CO-OCCURRENCE ANALYSIS
