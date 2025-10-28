@@ -257,7 +257,7 @@ if page == "📊 Data Overview":
     # Display data
     st.dataframe(
         filtered_df[['date', 'country_name', 'commodity', 'value_dl', 'value_qt', 'unit', 'sub_region']].head(1000),
-        use_container_width=True,
+        width='stretch',
         height=400
     )
     
@@ -442,7 +442,7 @@ elif page == "🔍 EDA Explorer":
             markers=True
         )
         fig_monthly_eda.update_traces(line_color='#1E88E5', line_width=2.5)
-        st.plotly_chart(fig_monthly_eda, use_container_width=True)
+        st.plotly_chart(fig_monthly_eda, width='stretch')
         
         st.markdown("""
         <div class="insight-box">
@@ -472,7 +472,7 @@ elif page == "🔍 EDA Explorer":
                 color='Total Value',
                 color_continuous_scale='Blues'
             )
-            st.plotly_chart(fig_yearly_eda, use_container_width=True)
+            st.plotly_chart(fig_yearly_eda, width='stretch')
         
         with col2:
             if len(yearly_eda.dropna()) > 0:
@@ -485,7 +485,7 @@ elif page == "🔍 EDA Explorer":
                 )
                 fig_yoy_eda.add_hline(y=0, line_dash="dash", line_color="gray")
                 fig_yoy_eda.update_traces(line_color='#FF6B6B', line_width=3)
-                st.plotly_chart(fig_yoy_eda, use_container_width=True)
+                st.plotly_chart(fig_yoy_eda, width='stretch')
             else:
                 st.info("Insufficient years for YoY analysis")
         
@@ -517,7 +517,7 @@ elif page == "🔍 EDA Explorer":
             color='Total',
             color_continuous_scale='Viridis'
         )
-        st.plotly_chart(fig_seasonal_eda, use_container_width=True)
+        st.plotly_chart(fig_seasonal_eda, width='stretch')
         
         st.markdown("""
         <div class="insight-box">
@@ -543,7 +543,7 @@ elif page == "🔍 EDA Explorer":
             color='quarter',
             color_continuous_scale='Teal'
         )
-        st.plotly_chart(fig_quarterly_eda, use_container_width=True)
+        st.plotly_chart(fig_quarterly_eda, width='stretch')
         
         st.markdown("""
         <div class="insight-box">
@@ -575,7 +575,7 @@ elif page == "🔍 EDA Explorer":
             title=f'Top {top_n_countries} Importing Countries',
             text_auto='.2s'
         )
-        st.plotly_chart(fig_countries, use_container_width=True)
+        st.plotly_chart(fig_countries, width='stretch')
         
         # Geographic map
         st.markdown("#### Import Value Heatmap")
@@ -591,7 +591,7 @@ elif page == "🔍 EDA Explorer":
             labels={'value_dl': 'Total Value (USD)'}
         )
         fig_map.update_geos(scope='africa')
-        st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(fig_map, width='stretch')
         
         # Regional breakdown
         st.markdown("#### Regional Analysis")
@@ -605,7 +605,7 @@ elif page == "🔍 EDA Explorer":
                 names='Sub-Region',
                 title='Import Distribution by Sub-Region'
             )
-            st.plotly_chart(fig_regional, use_container_width=True)
+            st.plotly_chart(fig_regional, width='stretch')
     
     # ===== TAB 3: COMMODITY INSIGHTS =====
     with eda_tabs[2]:
@@ -629,7 +629,7 @@ elif page == "🔍 EDA Explorer":
             text_auto='.2s',
             height=max(400, top_n_commodities * 25)  # Dynamic height based on number of items
         )
-        st.plotly_chart(fig_commodities, use_container_width=True)
+        st.plotly_chart(fig_commodities, width='stretch')
         
         # Commodity diversity
         st.markdown("#### Commodity Diversity by Country")
@@ -646,7 +646,7 @@ elif page == "🔍 EDA Explorer":
             title=f'Top {top_n_diversity} Countries by Commodity Diversity',
             text_auto=True
         )
-        st.plotly_chart(fig_diversity, use_container_width=True)
+        st.plotly_chart(fig_diversity, width='stretch')
         
         st.info("📊 **Insight**: Higher commodity diversity indicates more complex import portfolios and varied industrial needs.")
     
@@ -665,7 +665,7 @@ elif page == "🔍 EDA Explorer":
                 labels={'value_dl': 'Transaction Value (USD)'},
                 marginal='box'
             )
-            st.plotly_chart(fig_hist_eda, use_container_width=True)
+            st.plotly_chart(fig_hist_eda, width='stretch')
         
         with col2:
             fig_box_eda = px.box(
@@ -674,7 +674,7 @@ elif page == "🔍 EDA Explorer":
                 title='Statistical Summary (Box Plot)',
                 labels={'value_dl': 'Transaction Value (USD)'}
             )
-            st.plotly_chart(fig_box_eda, use_container_width=True)
+            st.plotly_chart(fig_box_eda, width='stretch')
         
         st.markdown("""
         <div class="insight-box">
@@ -704,7 +704,7 @@ elif page == "🔍 EDA Explorer":
                                                name='6-Month MA', line=dict(color='#FF6B6B', width=2.5)))
             fig_ma_eda.update_layout(title='Trend Analysis with Moving Averages', 
                                      xaxis_title='Date', yaxis_title='Import Value (USD)')
-            st.plotly_chart(fig_ma_eda, use_container_width=True)
+            st.plotly_chart(fig_ma_eda, width='stretch')
         else:
             st.info("Insufficient data points for moving average calculation")
         
@@ -735,7 +735,7 @@ elif page == "🔍 EDA Explorer":
                 color_continuous_scale='Plasma',
                 hover_data=['date', 'unit_price']
             )
-            st.plotly_chart(fig_scatter_eda, use_container_width=True)
+            st.plotly_chart(fig_scatter_eda, width='stretch')
             
             if len(valid_qty_data) > 0:
                 price_trend = valid_qty_data.resample('M', on='date')['unit_price'].mean().reset_index()
@@ -747,7 +747,7 @@ elif page == "🔍 EDA Explorer":
                     labels={'unit_price': 'Unit Price (USD)', 'date': 'Date'},
                     markers=True
                 )
-                st.plotly_chart(fig_price_eda, use_container_width=True)
+                st.plotly_chart(fig_price_eda, width='stretch')
         else:
             st.info("No quantity data available for this selection")
         
@@ -775,7 +775,7 @@ elif page == "🔍 EDA Explorer":
             labels={'Cumulative Value': 'Total Cumulative Value (USD)'}
         )
         fig_cumulative_eda.update_traces(fillcolor='rgba(30,136,229,0.3)', line_color='#1E88E5')
-        st.plotly_chart(fig_cumulative_eda, use_container_width=True)
+        st.plotly_chart(fig_cumulative_eda, width='stretch')
         
         st.markdown("""
         <div class="insight-box">
@@ -796,7 +796,7 @@ elif page == "🔍 EDA Explorer":
                 title='Import Value Distribution by Sub-Region',
                 labels={'value_dl': 'Value (USD)', 'sub_region': 'Sub-Region'}
             )
-            st.plotly_chart(fig_box, use_container_width=True)
+            st.plotly_chart(fig_box, width='stretch')
     
     # ===== TAB 5: CORRELATIONS =====
     with eda_tabs[4]:
@@ -832,7 +832,7 @@ elif page == "🔍 EDA Explorer":
                 color_continuous_scale='RdBu_r',
                 aspect='auto'
             )
-            st.plotly_chart(fig_corr, use_container_width=True)
+            st.plotly_chart(fig_corr, width='stretch')
             
             st.info("📊 **Insight**: Positive correlation (red) suggests commodities imported together; negative (blue) suggests inverse patterns.")
     
@@ -864,7 +864,7 @@ elif page == "🔍 EDA Explorer":
                 title='Import Value Comparison Over Time',
                 labels={'Value': 'Total Value (USD)'}
             )
-            st.plotly_chart(fig_compare, use_container_width=True)
+            st.plotly_chart(fig_compare, width='stretch')
         
         # Concentration analysis
         st.markdown("#### Market Concentration")
@@ -885,7 +885,7 @@ elif page == "🔍 EDA Explorer":
                 labels={'rank': 'Country Rank', 'cumulative_pct': 'Cumulative % of Total Value'}
             )
             fig_conc.add_hline(y=80, line_dash="dash", annotation_text="80%")
-            st.plotly_chart(fig_conc, use_container_width=True)
+            st.plotly_chart(fig_conc, width='stretch')
         
         with col2:
             commodity_conc = df.groupby('commodity')['value_dl'].sum().sort_values(ascending=False).reset_index()
@@ -900,7 +900,7 @@ elif page == "🔍 EDA Explorer":
                 labels={'rank': 'Commodity Rank', 'cumulative_pct': 'Cumulative % of Total Value'}
             )
             fig_comm_conc.add_hline(y=80, line_dash="dash", annotation_text="80%")
-            st.plotly_chart(fig_comm_conc, use_container_width=True)
+            st.plotly_chart(fig_comm_conc, width='stretch')
 
 # ======================================================================
 # DASHBOARD 3: INTERACTIVE MACHINE LEARNING MODELS
@@ -1066,7 +1066,7 @@ elif page == "🎯 Interactive Models":
             # Display results
             results_df = pd.DataFrame(results).T
             results_df = results_df.round(4)
-            st.dataframe(results_df, use_container_width=True)
+            st.dataframe(results_df, width='stretch')
             
             # Best model
             best_model = results_df['R² Score'].idxmax()
@@ -1115,7 +1115,7 @@ elif page == "🎯 Interactive Models":
                 hovermode='x unified'
             )
             
-            st.plotly_chart(fig_reg, use_container_width=True)
+            st.plotly_chart(fig_reg, width='stretch')
             
             # Feature Importance (for tree-based models)
             if best_model in ['Random Forest', 'XGBoost']:
@@ -1138,7 +1138,7 @@ elif page == "🎯 Interactive Models":
                     color='Importance',
                     color_continuous_scale='Blues'
                 )
-                st.plotly_chart(fig_imp, use_container_width=True)
+                st.plotly_chart(fig_imp, width='stretch')
                 
                 st.markdown("""
                 <div class="insight-box">
@@ -1266,7 +1266,7 @@ elif page == "🎯 Interactive Models":
                 height=500
             )
             
-            st.plotly_chart(fig_forecast, use_container_width=True)
+            st.plotly_chart(fig_forecast, width='stretch')
             
             # Summary stats
             col1, col2, col3 = st.columns(3)
@@ -1353,7 +1353,7 @@ elif page == "🎯 Interactive Models":
                     color_discrete_sequence=['#4CAF50', '#FF9800', '#F44336'],
                     color_discrete_map={'Growing': '#4CAF50', 'Stable': '#FF9800', 'Declining': '#F44336'}
                 )
-                st.plotly_chart(fig_trend_dist, use_container_width=True)
+                st.plotly_chart(fig_trend_dist, width='stretch')
             
             with col2:
                 st.metric("Growing Trades", f"{trend_dist.get('Growing', 0):,}")
@@ -1432,7 +1432,7 @@ elif page == "🎯 Interactive Models":
             # Display results
             trend_results_df = pd.DataFrame(trend_results).T
             trend_results_df = trend_results_df.round(4)
-            st.dataframe(trend_results_df, use_container_width=True)
+            st.dataframe(trend_results_df, width='stretch')
             
             best_trend_model = trend_results_df['Accuracy'].idxmax()
             st.success(f"🏆 **Best Model:** {best_trend_model} (Accuracy = {trend_results_df.loc[best_trend_model, 'Accuracy']:.4f})")
@@ -1464,7 +1464,7 @@ elif page == "🎯 Interactive Models":
                 color_continuous_scale='RdYlGn',
                 title=f'Trend Prediction Confusion Matrix - {best_trend_model}'
             )
-            st.plotly_chart(fig_cm_trend, use_container_width=True)
+            st.plotly_chart(fig_cm_trend, width='stretch')
             
             # Feature Importance (for tree models)
             if best_trend_model in ['Random Forest', 'XGBoost']:
@@ -1487,7 +1487,7 @@ elif page == "🎯 Interactive Models":
                     color='Importance',
                     color_continuous_scale='Viridis'
                 )
-                st.plotly_chart(fig_imp_trend, use_container_width=True)
+                st.plotly_chart(fig_imp_trend, width='stretch')
     
     # ========================================================================
     # TAB 3: CLUSTERING MODELS - CO-OCCURRENCE ANALYSIS
@@ -1548,7 +1548,7 @@ elif page == "🎯 Interactive Models":
         
         if co_occur_pairs:
             co_occur_df = pd.DataFrame(co_occur_pairs).sort_values('Co-Occurrence Score', ascending=False).head(20)
-            st.dataframe(co_occur_df, use_container_width=True)
+            st.dataframe(co_occur_df, width='stretch')
             
             st.markdown("""
             <div class="insight-box">
@@ -1599,7 +1599,7 @@ elif page == "🎯 Interactive Models":
                 yaxis_title='Inertia',
                 height=400
             )
-            st.plotly_chart(fig_elbow, use_container_width=True)
+            st.plotly_chart(fig_elbow, width='stretch')
             
             if silhouette_scores:
                 optimal_k = silhouette_scores.index(max(silhouette_scores)) + 2
@@ -1638,7 +1638,7 @@ elif page == "🎯 Interactive Models":
                 color_discrete_sequence=px.colors.qualitative.Set3,
                 height=600
             )
-            st.plotly_chart(fig_clusters, use_container_width=True)
+            st.plotly_chart(fig_clusters, width='stretch')
             
             st.markdown(f"""
             <div class="insight-box">
@@ -1677,7 +1677,7 @@ elif page == "🎯 Interactive Models":
                 })
             
             cluster_chars_df = pd.DataFrame(cluster_chars).sort_values('Total Value', ascending=False)
-            st.dataframe(cluster_chars_df, use_container_width=True)
+            st.dataframe(cluster_chars_df, width='stretch')
             
             st.markdown("""
             <div class="insight-box">
