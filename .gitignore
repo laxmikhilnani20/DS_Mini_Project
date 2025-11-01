@@ -32,6 +32,7 @@ eggs/
 
 # VS Code
 .vscode/
+models/
 
 # Data
 data/
