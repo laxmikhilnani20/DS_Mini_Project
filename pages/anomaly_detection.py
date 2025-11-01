@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from scipy import stats
 from sklearn.ensemble import IsolationForest
-from utils import format_currency, validate_dataframe
+from utils import format_currency
 
 
 def detect_statistical_anomalies(df, column='value_dl', method='zscore', threshold=3):
@@ -92,10 +92,6 @@ def detect_price_anomalies(df):
 def render(df):
     """Render the Anomaly Detection dashboard"""
     
-    # Validate data
-    if not validate_dataframe(df, min_rows=10):
-        return
-    
     st.markdown('<p class="main-header">🔍 Anomaly Detection</p>', unsafe_allow_html=True)
     st.markdown("### Identify unusual patterns, outliers, and potential data quality issues")
     
@@ -125,17 +121,10 @@ def render(df):
         st.markdown("## 🎯 Anomaly Detection Overview")
         
         # Detect anomalies using multiple methods
-        try:
-            with st.spinner("Detecting anomalies across all methods..."):
-                df_anomalies = detect_statistical_anomalies(df, method='zscore', threshold=3)
-                df_anomalies = detect_time_series_anomalies(df_anomalies, window=30, threshold=2)
-                df_anomalies = detect_price_anomalies(df_anomalies)
-        except Exception as e:
-            st.error(f"❌ Error detecting anomalies: {str(e)}")
-            st.info("💡 This may be due to insufficient data or data quality issues.")
-            with st.expander("🔍 Technical Details"):
-                st.code(str(e))
-            return
+        with st.spinner("Detecting anomalies across all methods..."):
+            df_anomalies = detect_statistical_anomalies(df, method='zscore', threshold=3)
+            df_anomalies = detect_time_series_anomalies(df_anomalies, window=30, threshold=2)
+            df_anomalies = detect_price_anomalies(df_anomalies)
         
         # Count anomalies
         total_records = len(df_anomalies)
